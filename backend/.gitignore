@@ -7,3 +7,4 @@ coverage/
 
 .DS_store
 *.log
+error-handling.md
