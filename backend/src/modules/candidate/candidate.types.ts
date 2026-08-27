@@ -23,6 +23,23 @@ export interface CandidateEducation{
     endYear?:number;
 }
 
+export const NOTICE_PERIOD_OPTIONS = [
+    "immediate",
+    "15_days",
+    "30_days",
+    "45_days",
+    "60_days",
+    "90_days",
+    "serving",
+] as const;
+
+export type NoticePeriodOption = (typeof NOTICE_PERIOD_OPTIONS)[number]
+
+export interface CandidateNoticePeriod{
+    option:NoticePeriodOption;
+    lastWorkingDay?:Date | undefined;
+}
+
 //Note : Structured Retrieval is more necessary rather than the data is deterministic
 
 export interface Candidate{
@@ -37,6 +54,9 @@ export interface Candidate{
     professionalSummary?:string;
     experience:CandidateExperience[];
     education:CandidateEducation[];
+    currentSalary:Number;
+    expectedSalary:Number;
+    noticePeriod:CandidateNoticePeriod;
     createdAt:Date;
     updatedAt:Date;
 }
