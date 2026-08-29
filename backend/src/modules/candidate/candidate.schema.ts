@@ -11,8 +11,8 @@ const locationSchema = z.object({
 const experienceSchema = z.object({
     company:z.string().trim().min(1),
     role:z.string().trim().min(1),
-    startDate:z.number().int().min(1950).max(new Date().getFullYear() + 6).optional(),
-    endDate:z.number().int().min(1950).max(new Date().getFullYear() + 6).optional(),
+    startDate:z.coerce.date().optional(),
+    endDate:z.coerce.date().optional(),
     isCurrent:z.boolean().default(false),
     description:z.string().trim().optional()
 }).refine(
@@ -29,7 +29,7 @@ const experienceSchema = z.object({
 const educationSchema = z.object({
     institution:z.string().trim().min(1),
     degree:z.string().trim().optional(),
-    fieldOfStudy:z.string().trim().optional(),
+    fieldOfStudy:z.string().trim().min(1).optional(),
     startYear:z.number().int().optional(),
     endYear:z.number().int().optional()
 }).refine(
@@ -47,7 +47,7 @@ const noticePeriodSchema = z.object({
     option:z.enum(NOTICE_PERIOD_OPTIONS),
     lastWorkingDay:z.coerce.date().optional(),
 }).refine(
-    (np)=> np.option !== "serving" || np.lastWorkingDay !== null,
+    (np)=> np.option !== "serving" || np.lastWorkingDay != null,
     {
         message:"lastWorkingDay is required when serving notice period",
         path:["lastWorkingDay"]
@@ -61,7 +61,7 @@ export const createCandidateSchema = z.object({
         phone:z.string().trim().optional(),
         location:locationSchema.optional(),
         skills:z.array(z.string().trim().min(1)).default([]),
-        totalExperience:z.number().min(0).max(99).default(0),
+        totalExperienceYears:z.number().min(0).max(99).default(0),
         currentSalary:z.number().min(0).optional(),
         expectedSalary:z.number().min(0).optional(),
         noticePeriod:noticePeriodSchema.optional(),
@@ -80,3 +80,18 @@ export const updateCandidateSchema = z.object({
         }
     )
 })
+
+export const candidateIdSchema = z.object({
+    params:z.object({
+        id:z.string().trim().min(1)
+    }),
+});
+
+export type CreateCandidateInput = 
+    z.infer<typeof createCandidateSchema>["body"];
+
+export type UpdateCandidateInput = 
+    z.infer<typeof updateCandidateSchema>["body"]
+
+export type CandidateIdParams = 
+    z.infer<typeof candidateIdSchema>["params"]
