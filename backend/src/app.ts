@@ -6,6 +6,7 @@ import { env } from "./config/env.js"
 import { healthRouter } from "./modules/health/health.routes.js"
 import { notFoundMiddleware } from "./middleware/not-found.middleware.js"
 import { errorMiddleware } from "./middleware/errror.middleware.js"
+import { candidateRouter } from "./modules/candidate/candidate.routes.js"
 
 export const app = express()
 
@@ -20,6 +21,7 @@ app.use(express.urlencoded({extended:true}))
 app.use(express.json({limit:"1mb"}))
 
 app.use("/api/v1/health",healthRouter)
+app.use("/api/v1/candidates",candidateRouter)
 
 app.use(notFoundMiddleware)
 
