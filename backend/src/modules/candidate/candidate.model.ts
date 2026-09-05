@@ -1,5 +1,5 @@
 import { Schema,model,type HydratedDocument } from "mongoose";
-import type {  CandidateNoticePeriod,  Candidate, CandidateEducation, CandidateExperience, CandidateLocation } from "./candidate.types.js";
+import { CANDIDATE_SOURCES, type CandidateNoticePeriod, type Candidate, type CandidateEducation, type CandidateExperience, type CandidateLocation } from "./candidate.types.js";
 const locationSchema = new Schema<CandidateLocation>(
     {
         city:{
@@ -43,10 +43,7 @@ const educationSchema = new Schema<CandidateEducation>(
     {
         institution:String,
         degree:String,
-        fieldOfStudy:{
-            type:String,
-            required:true,
-        },
+        fieldOfStudy:String,
         startYear:Number,
         endYear:Number,
     },
@@ -74,6 +71,16 @@ const noticePeriodSchema = new Schema<CandidateNoticePeriod>(
 
 const candidateSchema = new Schema<Candidate>(
     {
+        organizationId:{
+            type:Schema.Types.ObjectId,
+            ref:"Organization",
+            index:true
+        },
+        recruiterId:{
+            type:Schema.Types.ObjectId,
+            ref:"Recruiter",
+            index:true
+        },
         name:{
             type:String,
             required:true
@@ -118,11 +125,23 @@ const candidateSchema = new Schema<Candidate>(
             min:0
         },
         noticePeriod:noticePeriodSchema,
+        source:{
+            type:String,
+            enum:[...CANDIDATE_SOURCES],
+            required:true,
+            default:"manual"
+        },
+        sourceResumeIds:{
+            type:[String],
+            default:[]
+        },
     },
     {timestamps:true}
 )
 
 candidateSchema.index({skills:1})
+candidateSchema.index({organizationId:1,email:1})
+candidateSchema.index({organizationId:1,"location.city":1,totalExperienceYears:1})
 candidateSchema.index({"location.city":1,totalExperienceYears:1,createdAt:-1})
 candidateSchema.index({currentRole:1,totalExperienceYears:1})
 candidateSchema.index({name:1})

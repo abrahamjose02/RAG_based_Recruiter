@@ -81,11 +81,43 @@ export const updateCandidateSchema = z.object({
     )
 })
 
+const objectIdString = z
+    .string()
+    .trim()
+    .regex(/^[a-fA-F0-9]{24}$/,"Invalid ID")
+
 export const candidateIdSchema = z.object({
     params:z.object({
-        id:z.string().trim().min(1)
+        id:objectIdString
     }),
 });
+
+export const listCandidatesSchema = z.object({
+    query:z.object({
+        skills:z
+            .union([z.string(),z.array(z.string())])
+            .optional()
+            .transform((value)=>{
+                if(!value) return undefined
+                const items = Array.isArray(value) ? value : value.split(",")
+                const skills = items.map((skill)=>skill.trim()).filter(Boolean)
+                return skills.length > 0 ? skills : undefined
+            }),
+        city:z.string().trim().min(1).optional(),
+        currentRole:z.string().trim().min(1).optional(),
+        name:z.string().trim().min(1).optional(),
+        phone:z.string().trim().min(1).optional(),
+        noticePeriodOption:z.enum(NOTICE_PERIOD_OPTIONS).optional(),
+        minExperienceYears:z.coerce.number().min(0).max(99).optional(),
+        maxExperienceYears:z.coerce.number().min(0).max(99).optional(),
+        minCurrentSalary:z.coerce.number().min(0).optional(),
+        maxCurrentSalary:z.coerce.number().min(0).optional(),
+        minExpectedSalary:z.coerce.number().min(0).optional(),
+        maxExpectedSalary:z.coerce.number().min(0).optional(),
+        page:z.coerce.number().int().min(1).default(1),
+        limit:z.coerce.number().int().min(1).max(100).default(20),
+    })
+})
 
 export type CreateCandidateInput = 
     z.infer<typeof createCandidateSchema>["body"];
@@ -95,3 +127,6 @@ export type UpdateCandidateInput =
 
 export type CandidateIdParams = 
     z.infer<typeof candidateIdSchema>["params"]
+
+export type ListCandidatesQuery =
+    z.infer<typeof listCandidatesSchema>["query"]

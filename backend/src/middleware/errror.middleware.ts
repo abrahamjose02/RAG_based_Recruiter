@@ -9,7 +9,6 @@ import type { ErrorRequestHandler } from "express";
 import { AppError } from "../errors/app-error.js";
 import { env } from "../config/env.js";
 import { logger } from "../utils/logger.js";
-import { success } from "zod";
 
 export const errorMiddleware:ErrorRequestHandler = (error,_req,res,_next):void => {
     logger.error("Request failed",error)

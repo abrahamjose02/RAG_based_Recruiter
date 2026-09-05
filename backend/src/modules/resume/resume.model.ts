@@ -29,7 +29,7 @@ const ParsedExperienceSchema = new Schema<ParsedExperience>(
         },
         role:{
             type:String,
-            requried:true,
+            required:true,
             trim:true
         },
         startDate:String,
@@ -63,7 +63,6 @@ const parsedResumeSchema = new Schema<ParsedResumeResult>(
         name:String,
         email:{
             type:String,
-            required:true,
             lowercase:true,
             trim:true
         },
@@ -93,9 +92,25 @@ const parsedResumeSchema = new Schema<ParsedResumeResult>(
 
 const resumeSchema = new Schema<Resume>(
     {
+        organizationId:{
+            type:Schema.Types.ObjectId,
+            ref:"Organization",
+            index:true
+        },
+        recruiterId:{
+            type:Schema.Types.ObjectId,
+            ref:"Recruiter",
+            index:true
+        },
         candidateId:{
             type:Schema.Types.ObjectId,
             ref:"Candidate",
+            index:true
+        },
+        clientDocumentId:{
+            type:String,
+            required:true,
+            trim:true,
             index:true
         },
         originalFilename:{
@@ -114,6 +129,11 @@ const resumeSchema = new Schema<Resume>(
         sizeBytes:{
             type:Number,
             required:true
+        },
+        extractedText:{
+            type:String,
+            required:true,
+            trim:true
         },
         status:{
             type:String,
@@ -134,6 +154,8 @@ const resumeSchema = new Schema<Resume>(
 )
 
 resumeSchema.index({candidateId:1,createdAt:-1})
+resumeSchema.index({clientDocumentId:1,createdAt:-1})
+resumeSchema.index({organizationId:1,status:1,createdAt:-1})
 resumeSchema.index({status:1,createdAt:-1})
 
 export type ResumeDocument = HydratedDocument<Resume>;

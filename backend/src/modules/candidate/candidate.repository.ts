@@ -30,10 +30,6 @@ function stripUndefined<T>(value:T):T{
     return JSON.parse(JSON.stringify(value))
 }
 
-function escapeRegex(value:string):string{
-    return value.replace(/[.*+?^${}()|[\]\\]/g,"\\$&");
-}
-
 class CandidateRepository{
     async create(data:CreateCandidateInput):Promise<CandidateDocument>{
         const candidate = await CandidateModel.create(
@@ -43,7 +39,7 @@ class CandidateRepository{
     }
     
    async findById(id:string):Promise<CandidateDocument | null >{
-    if(!isValidObjectId){
+    if(!isValidObjectId(id)){
         return null
     }
     return CandidateModel.findById(id)
@@ -122,7 +118,7 @@ class CandidateRepository{
    }
 
    async updateById(id:string,data:UpdateCandidateInput):Promise<CandidateDocument | null>{
-    if(!isValidObjectId){
+    if(!isValidObjectId(id)){
         return null
     }
     return CandidateModel.findByIdAndUpdate(id,
@@ -132,7 +128,7 @@ class CandidateRepository{
    }
 
    async deleteById(id:string):Promise<CandidateDocument | null>{
-    if(!isValidObjectId){
+    if(!isValidObjectId(id)){
         return null
     }
     return CandidateModel.findByIdAndDelete(id);

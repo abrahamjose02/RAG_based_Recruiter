@@ -38,6 +38,9 @@ export function validate<T extends RequestParts>(schema:ZodType<T>){
         if(result.data.params){
             req.params = result.data.params as typeof req.params
         }
+        if(result.data.query){
+            req.query = result.data.query as typeof req.query
+        }
         next();
     }
 }

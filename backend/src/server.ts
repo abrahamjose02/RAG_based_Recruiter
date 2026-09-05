@@ -3,7 +3,6 @@ import { app } from "./app.js";
 import { env } from "./config/env.js";
 import { connnectDB,disconnectDB } from "./config/database.js";
 import { logger } from "./utils/logger.js";
-import { error } from "node:console";
 
 let server: Server | undefined
 

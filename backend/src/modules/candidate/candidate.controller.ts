@@ -1,6 +1,7 @@
 import type { Request,Response } from "express";
 import { candidateService } from "./candidate.service.js";
-import type { CreateCandidateInput,UpdateCandidateInput,CandidateIdParams } from "./candidate.schema.js";
+import type { CreateCandidateInput,UpdateCandidateInput,CandidateIdParams,ListCandidatesQuery } from "./candidate.schema.js";
+import type { CandidateQueryFilter } from "./candidate.repository.js";
 
 export async function createCandidate(req:Request<Record<string,never>,unknown,CreateCandidateInput>,res:Response):Promise<void>{
     const candidate = await candidateService.createCandidate(req.body)
@@ -11,8 +12,12 @@ export async function createCandidate(req:Request<Record<string,never>,unknown,C
     })
 }
 
-export async function getCandidates(_req:Request,res:Response):Promise<void>{
-    const result = await candidateService.getCandidates();
+export async function getCandidates(req:Request,res:Response):Promise<void>{
+    const {page,limit,...filter} = req.query as unknown as ListCandidatesQuery
+    const result = await candidateService.getCandidates(
+        JSON.parse(JSON.stringify(filter)) as CandidateQueryFilter,
+        {page,limit}
+    )
 
     res.status(200).json({
         success:true,

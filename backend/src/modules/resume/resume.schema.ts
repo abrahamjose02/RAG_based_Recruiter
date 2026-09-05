@@ -1,5 +1,5 @@
-import z, { success } from "zod";
-import { RESUME_STATUSES } from "./resume.types.js";
+import z from "zod";
+import { RESUME_ALLOWED_MIME_TYPES } from "./resume.types.js";
 
 const objectIdString = z
     .string()
@@ -8,7 +8,31 @@ const objectIdString = z
 
 export const uploadResumeSchema = z.object({
     body:z.object({
-        candidateId:objectIdString.optional()
+        candidateId:objectIdString.optional(),
+        documents:z
+            .array(
+                z.object({
+                    clientDocumentId:z.string().trim().min(1),
+                    file:z.object({
+                        name:z.string().trim().min(1),
+                        mimeType:z.enum(RESUME_ALLOWED_MIME_TYPES),
+                        size:z.number().int().positive().max(10 * 1024 * 1024),
+                    }),
+                    storage:z.object({
+                        key:z
+                            .string()
+                            .trim()
+                            .min(1)
+                            .regex(
+                                /^organizations\/[^/]+\/resumes\/[^/]+\/original\.(pdf|docx)$/i,
+                                "Invalid resume storage key"
+                            ),
+                    }),
+                    extractedText:z.string().trim().min(1),
+                })
+            )
+            .min(1)
+            .max(25)
     })
 })
 

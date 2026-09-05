@@ -11,17 +11,21 @@ export interface CandidateExperience{
     role?:string;
     startDate?:Date;
     endDate?:Date;
-    isCurrent?:Boolean
+    isCurrent?:boolean
     description?:string
 }
 
 export interface CandidateEducation{
     institution?:string;
     degree?:string;
-    fieldOfStudy:string;
+    fieldOfStudy?:string;
     startYear?:number;
     endYear?:number;
 }
+
+export const CANDIDATE_SOURCES = ["resume_upload", "manual"] as const;
+
+export type CandidateSource = (typeof CANDIDATE_SOURCES)[number]
 
 export const NOTICE_PERIOD_OPTIONS = [
     "immediate",
@@ -44,6 +48,8 @@ export interface CandidateNoticePeriod{
 
 export interface Candidate{
     id:string;
+    organizationId?:string;
+    recruiterId?:string;
     name:string;
     email:string;
     phone?:string;
@@ -54,9 +60,11 @@ export interface Candidate{
     professionalSummary?:string;
     experience:CandidateExperience[];
     education:CandidateEducation[];
-    currentSalary:Number;
-    expectedSalary:Number;
-    noticePeriod:CandidateNoticePeriod;
+    currentSalary?:number;
+    expectedSalary?:number;
+    noticePeriod?:CandidateNoticePeriod;
+    source:CandidateSource;
+    sourceResumeIds:string[];
     createdAt:Date;
     updatedAt:Date;
 }
