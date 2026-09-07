@@ -4,7 +4,7 @@ import { resumeRepository, type ResumeQueryFilter, type FindManyResumesOptions }
 import type { UploadResumeInput } from "./resume.schema.js";
 
 class ResumeService {
-    async createResumeManifests(input: UploadResumeInput) {
+    async createResume(input: UploadResumeInput) {
         if (input.candidateId) {
             const candidate = await candidateRepository.findById(input.candidateId);
 
