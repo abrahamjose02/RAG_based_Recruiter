@@ -1,4 +1,4 @@
-import type { CandidateLocation } from "../candidate/candidate.types.js";
+import type { CandidateLocation } from "../candidate/candidate.types";
 export const RESUME_STATUSES = [
     "uploaded",
     "processing",

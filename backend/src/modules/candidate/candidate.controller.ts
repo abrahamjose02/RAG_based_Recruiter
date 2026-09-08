@@ -1,7 +1,7 @@
 import type { Request,Response } from "express";
-import { candidateService } from "./candidate.service.js";
-import type { CreateCandidateInput,UpdateCandidateInput,CandidateIdParams,ListCandidatesQuery } from "./candidate.schema.js";
-import type { CandidateQueryFilter } from "./candidate.repository.js";
+import { candidateService } from "./candidate.service";
+import type { CreateCandidateInput,UpdateCandidateInput,CandidateIdParams,ListCandidatesQuery } from "./candidate.schema";
+import type { CandidateQueryFilter } from "./candidate.repository";
 
 export async function createCandidate(req:Request<Record<string,never>,unknown,CreateCandidateInput>,res:Response):Promise<void>{
     const candidate = await candidateService.createCandidate(req.body)

@@ -1,5 +1,5 @@
 import { Schema,model,type HydratedDocument } from "mongoose";
-import { CANDIDATE_SOURCES, type CandidateNoticePeriod, type Candidate, type CandidateEducation, type CandidateExperience, type CandidateLocation } from "./candidate.types.js";
+import { CANDIDATE_SOURCES, type CandidateNoticePeriod, type Candidate, type CandidateEducation, type CandidateExperience, type CandidateLocation } from "./candidate.types";
 const locationSchema = new Schema<CandidateLocation>(
     {
         city:{

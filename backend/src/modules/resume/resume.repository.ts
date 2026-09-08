@@ -1,7 +1,7 @@
 import { isValidObjectId, type QueryFilter } from "mongoose";
-import { ResumeModel, type ResumeDocument } from "./resume.model.js";
-import type { UploadResumeInput } from "./resume.schema.js";
-import type { Resume } from "./resume.types.js";
+import { ResumeModel, type ResumeDocument } from "./resume.model";
+import type { UploadResumeInput } from "./resume.schema";
+import type { Resume } from "./resume.types";
 
 export type ResumeQueryFilter = {
     candidateId?: string;

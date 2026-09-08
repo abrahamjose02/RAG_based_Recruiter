@@ -22,11 +22,11 @@
   "name": "backend",
   "version": "1.0.0",
   "description": "Backend for RAG workflow",
-  "type": "module",
   "main": "dist/server.js",
   "scripts": {
     "build": "tsc",
     "start": "node dist/server.js",
+    "dev":"tsx watch src/server.ts",
     "typecheck": "tsc --noEmit"
   },
   "keywords": [],

@@ -1,6 +1,6 @@
-import { AppError } from "../../errors/app-error.js";
-import type { CreateCandidateInput,UpdateCandidateInput } from "./candidate.schema.js";
-import { candidateRepository, type CandidateQueryFilter, type FindManyOptions } from "./candidate.repository.js";
+import { AppError } from "../../errors/app-error";
+import type { CreateCandidateInput,UpdateCandidateInput } from "./candidate.schema";
+import { candidateRepository, type CandidateQueryFilter, type FindManyOptions } from "./candidate.repository";
 
 class CandidateService{
     async createCandidate(input:CreateCandidateInput){

@@ -1,7 +1,7 @@
-import { AppError } from "../../errors/app-error.js";
-import { candidateRepository } from "../candidate/candidate.repository.js";
-import { resumeRepository, type ResumeQueryFilter, type FindManyResumesOptions } from "./resume.repository.js";
-import type { UploadResumeInput } from "./resume.schema.js";
+import { AppError } from "../../errors/app-error";
+import { candidateRepository } from "../candidate/candidate.repository";
+import { resumeRepository, type ResumeQueryFilter, type FindManyResumesOptions } from "./resume.repository";
+import type { UploadResumeInput } from "./resume.schema";
 
 class ResumeService {
     async createResume(input: UploadResumeInput) {

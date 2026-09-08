@@ -1,7 +1,7 @@
 import { Router } from "express";
-import { validate } from "../../middleware/validation.middleware.js";
-import { createCandidateSchema,updateCandidateSchema,candidateIdSchema,listCandidatesSchema } from "./candidate.schema.js";
-import { createCandidate,getCandidateById,getCandidates,updateCandidate,deleteCandidate } from "./candidate.controller.js";
+import { validate } from "../../middleware/validation.middleware";
+import { createCandidateSchema,updateCandidateSchema,candidateIdSchema,listCandidatesSchema } from "./candidate.schema";
+import { createCandidate,getCandidateById,getCandidates,updateCandidate,deleteCandidate } from "./candidate.controller";
 
 const candidateRouter = Router()
 

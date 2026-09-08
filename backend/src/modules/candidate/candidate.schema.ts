@@ -1,6 +1,6 @@
 //validation schema protects the application boundary
 import z from "zod";
-import { NOTICE_PERIOD_OPTIONS } from "./candidate.types.js";
+import { NOTICE_PERIOD_OPTIONS } from "./candidate.types";
 
 const locationSchema = z.object({
     city:z.string().trim().min(1).optional(),

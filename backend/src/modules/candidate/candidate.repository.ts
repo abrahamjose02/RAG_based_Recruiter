@@ -1,7 +1,7 @@
-import { CandidateModel,type CandidateDocument } from "./candidate.model.js";
-import type { CreateCandidateInput,UpdateCandidateInput } from "./candidate.schema.js";
+import { CandidateModel,type CandidateDocument } from "./candidate.model";
+import type { CreateCandidateInput,UpdateCandidateInput } from "./candidate.schema";
 import { isValidObjectId, type QueryFilter } from "mongoose";
-import type { Candidate, NoticePeriodOption } from "./candidate.types.js";
+import type { Candidate, NoticePeriodOption } from "./candidate.types";
 
 // Repositories owns the Database persistence logic.
 

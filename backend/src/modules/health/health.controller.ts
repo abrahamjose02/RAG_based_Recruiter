@@ -1,5 +1,5 @@
 import type { Request,Response } from "express";
-import { getHealthStatus } from "./health.service.js";
+import { getHealthStatus } from "./health.service";
 
 export function getHealth(req:Request,res:Response):void{
     const health = getHealthStatus()

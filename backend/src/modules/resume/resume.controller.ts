@@ -1,7 +1,7 @@
 import type { Request, Response } from "express";
-import { resumeService } from "./resume.service.js";
-import type { ListResumesQuery, ResumeIdParams, UploadResumeInput } from "./resume.schema.js";
-import type { ResumeQueryFilter } from "./resume.repository.js";
+import { resumeService } from "./resume.service";
+import type { ListResumesQuery, ResumeIdParams, UploadResumeInput } from "./resume.schema";
+import type { ResumeQueryFilter } from "./resume.repository";
 
 export async function createResume(
     req: Request<Record<string, never>, unknown, UploadResumeInput>,

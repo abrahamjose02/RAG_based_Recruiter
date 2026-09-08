@@ -1,4 +1,4 @@
-import { getDatabaseStatus } from "../../config/database.js";
+import { getDatabaseStatus } from "../../config/database";
 
 export function getHealthStatus(){
     const database = getDatabaseStatus()

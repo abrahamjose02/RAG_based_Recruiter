@@ -1,8 +1,8 @@
 import type { Server } from "node:http";
-import { app } from "./app.js";
-import { env } from "./config/env.js";
-import { connnectDB,disconnectDB } from "./config/database.js";
-import { logger } from "./utils/logger.js";
+import { app } from "./app";
+import { env } from "./config/env";
+import { connectDB,disconnectDB } from "./config/database";
+import { logger } from "./utils/logger";
 
 let server: Server | undefined
 
@@ -11,7 +11,7 @@ let server: Server | undefined
 
 async function bootstrap():Promise<void> {
     try {
-        await connnectDB()
+        await connectDB()
         server = app.listen(env.PORT,()=>{
             logger.info(`API running on ${env.PORT}`)
 

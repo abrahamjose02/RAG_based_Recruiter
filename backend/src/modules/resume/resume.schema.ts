@@ -1,5 +1,5 @@
 import z from "zod";
-import { RESUME_ALLOWED_MIME_TYPES } from "./resume.types.js";
+import { RESUME_ALLOWED_MIME_TYPES } from "./resume.types";
 
 const objectIdString = z
     .string()

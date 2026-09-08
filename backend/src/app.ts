@@ -2,12 +2,12 @@ import express from "express"
 import cors from "cors"
 import helmet from "helmet"
 
-import { env } from "./config/env.js"
-import { healthRouter } from "./modules/health/health.routes.js"
-import { notFoundMiddleware } from "./middleware/not-found.middleware.js"
-import { errorMiddleware } from "./middleware/errror.middleware.js"
-import { candidateRouter } from "./modules/candidate/candidate.routes.js"
-import { resumeRouter } from "./modules/resume/resume.routes.js"
+import { env } from "./config/env"
+import { healthRouter } from "./modules/health/health.routes"
+import { notFoundMiddleware } from "./middleware/not-found.middleware"
+import { errorMiddleware } from "./middleware/errror.middleware"
+import { candidateRouter } from "./modules/candidate/candidate.routes"
+import { resumeRouter } from "./modules/resume/resume.routes"
 
 export const app = express()
 

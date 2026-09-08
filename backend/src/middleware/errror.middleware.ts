@@ -6,9 +6,9 @@
 // This keeps our API response consistent
 
 import type { ErrorRequestHandler } from "express";
-import { AppError } from "../errors/app-error.js";
-import { env } from "../config/env.js";
-import { logger } from "../utils/logger.js";
+import { AppError } from "../errors/app-error";
+import { env } from "../config/env";
+import { logger } from "../utils/logger";
 
 export const errorMiddleware:ErrorRequestHandler = (error,_req,res,_next):void => {
     logger.error("Request failed",error)

@@ -1,8 +1,8 @@
 import { Router, type RequestHandler } from "express";
-import { AppError } from "../../errors/app-error.js";
-import { validate } from "../../middleware/validation.middleware.js";
-import { createResume, getResumeById, getResumes } from "./resume.controller.js";
-import { listResumeSchema, resumeIdSchema, uploadResumeSchema } from "./resume.schema.js";
+import { AppError } from "../../errors/app-error";
+import { validate } from "../../middleware/validation.middleware";
+import { createResume, getResumeById, getResumes } from "./resume.controller";
+import { listResumeSchema, resumeIdSchema, uploadResumeSchema } from "./resume.schema";
 
 const resumeRouter = Router();
 

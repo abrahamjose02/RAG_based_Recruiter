@@ -1,6 +1,6 @@
 import type { Request,Response,NextFunction } from "express";
 import type { ZodType } from "zod";
-import { AppError } from "../errors/app-error.js";
+import { AppError } from "../errors/app-error";
 // Generic request validation middleware
 
 
