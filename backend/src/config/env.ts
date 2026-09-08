@@ -19,6 +19,9 @@ const envSchema = z.object({
                 },
         ),
     CORS_ORIGIN:z.string().default('http://localhost:3000'),
+    JWT_SECRET:z.string().min(1,"JWT_SECRET is required"),
+    JWT_EXPIRES_IN:z.string().default("7d"),
+    BCRYPT_ROUNDS:z.coerce.number().int().positive().default(10)
 });
 
 const parsedEnvironment  = envSchema.safeParse(process.env)
