@@ -1,6 +1,6 @@
 export interface Recruiter{
     id:string;
-    organizationId:string;
+    organizationId?:string;
     email:string;
     firstName:string;
     lastName:string;
