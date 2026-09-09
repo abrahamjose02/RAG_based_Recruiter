@@ -1,6 +1,8 @@
+import { Types } from "mongoose";
+
 export interface Recruiter{
     id:string;
-    organizationId?:string;
+    organizationId:Types.ObjectId;
     email:string;
     firstName:string;
     lastName:string;
