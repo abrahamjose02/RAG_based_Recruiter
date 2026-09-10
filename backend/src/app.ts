@@ -9,6 +9,7 @@ import { errorMiddleware } from "./middleware/errror.middleware"
 import { candidateRouter } from "./modules/candidate/candidate.routes"
 import { resumeRouter } from "./modules/resume/resume.routes"
 import { organizationRouter } from "./modules/organization/organization.routes"
+import { recruiterRouter } from "./modules/recruiter/recruiter.router"
 
 export const app = express()
 
@@ -26,6 +27,7 @@ app.use("/api/v1/health",healthRouter)
 app.use("/api/v1/candidates",candidateRouter)
 app.use("/api/v1/resumes",resumeRouter)
 app.use("/api/v1/organization",organizationRouter)
+app.use("/api/v1/recruiters",recruiterRouter)
 
 app.use(notFoundMiddleware)
 
