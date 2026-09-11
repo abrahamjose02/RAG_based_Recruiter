@@ -90,7 +90,6 @@ const candidateSchema = new Schema<Candidate>(
             required:true,
             lowercase:true,
             trim:true,
-            unique:true
         },
         phone:String,
         location:locationSchema,
@@ -140,7 +139,7 @@ const candidateSchema = new Schema<Candidate>(
 )
 
 candidateSchema.index({skills:1})
-candidateSchema.index({organizationId:1,email:1})
+candidateSchema.index({email:1},{unique:true})
 candidateSchema.index({organizationId:1,"location.city":1,totalExperienceYears:1})
 candidateSchema.index({"location.city":1,totalExperienceYears:1,createdAt:-1})
 candidateSchema.index({currentRole:1,totalExperienceYears:1})
