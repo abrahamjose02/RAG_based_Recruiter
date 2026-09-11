@@ -21,7 +21,11 @@ const envSchema = z.object({
     CORS_ORIGIN:z.string().default('http://localhost:3000'),
     JWT_SECRET:z.string().min(1,"JWT_SECRET is required"),
     JWT_EXPIRES_IN:z.coerce.number().int().positive().default(60*60*24*7), // 7 days expiry
-    BCRYPT_ROUNDS:z.coerce.number().int().positive().default(10)
+    BCRYPT_ROUNDS:z.coerce.number().int().positive().default(10),
+    PYTHON_AI_BASE_URL:z
+        .string()
+        .url("PYTHON_AI_BASE_URL must be a valid URL")
+        .default("http://localhost:8000")
 });
 
 const parsedEnvironment  = envSchema.safeParse(process.env)
