@@ -3,6 +3,7 @@ import { AppError } from "../../errors/app-error";
 import { validate } from "../../middleware/validation.middleware";
 import { createResume, getResumeById, getResumes } from "./resume.controller";
 import { listResumeSchema, resumeIdSchema, uploadResumeSchema } from "./resume.schema";
+import { authMiddleware } from "../../middleware/auth.middleware";
 
 const resumeRouter = Router();
 
@@ -20,8 +21,8 @@ const rejectMultipartResumeUploads: RequestHandler = (req, _res, next) => {
     next();
 };
 
-resumeRouter.post("/", rejectMultipartResumeUploads, validate(uploadResumeSchema), createResume);
-resumeRouter.get("/", validate(listResumeSchema), getResumes);
-resumeRouter.get("/:id", validate(resumeIdSchema), getResumeById);
+resumeRouter.post("/",authMiddleware,rejectMultipartResumeUploads, validate(uploadResumeSchema), createResume);
+resumeRouter.get("/",authMiddleware,validate(listResumeSchema), getResumes);
+resumeRouter.get("/:id",authMiddleware,validate(resumeIdSchema), getResumeById);
 
 export { resumeRouter };
