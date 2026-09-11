@@ -1,7 +1,7 @@
 import { isValidObjectId, type QueryFilter } from "mongoose";
 import { ResumeModel, type ResumeDocument } from "./resume.model";
 import type { UploadResumeInput } from "./resume.schema";
-import type { Resume } from "./resume.types";
+import type { ParsedResumeResult, Resume, ResumeStatus } from "./resume.types";
 
 export type ResumeQueryFilter = {
     candidateId?: string;
@@ -13,9 +13,15 @@ export type FindManyResumesOptions = {
     sort?: Record<string, 1 | -1>;
 };
 
+export type CreateResumeRecordInput = UploadResumeInput & {
+    organizationId:string;
+    recruiterId:string
+}
 class ResumeRepository {
-    async createMany(input: UploadResumeInput): Promise<ResumeDocument[]> {
+    async createMany(input: CreateResumeRecordInput): Promise<ResumeDocument[]> {
         const resumes = input.documents.map((document) => ({
+            organizationId:input.organizationId,
+            recruiterId:input.recruiterId,
             candidateId: input.candidateId,
             clientDocumentId: document.clientDocumentId,
             originalFilename: document.file.name,
@@ -58,6 +64,27 @@ class ResumeRepository {
         ]);
 
         return { items, total };
+    }
+
+    async updateStatus(id:string,status:ResumeStatus,extra:{parsed?:ParsedResumeResult;errorMessage?: string | null} = {}):Promise<ResumeDocument | null>{
+        return ResumeModel.findByIdAndUpdate(id,
+            {
+                $set:{
+                    status,
+                    ...(extra.parsed? { parsed : extra.parsed } : {}),
+                    ...(extra.errorMessage !== undefined ? {errorMessage:extra.errorMessage} : {}),
+                },
+            },
+            {new : true}
+        )
+    }
+
+    async attachCandidate(id:string,candidateId:string):Promise<ResumeDocument | null >{
+        return ResumeModel.findByIdAndUpdate(
+            id,
+            {$set:{candidateId,status:"parsed"}},
+            {new : true},
+        );
     }
 }
 

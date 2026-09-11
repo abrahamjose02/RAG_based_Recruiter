@@ -71,16 +71,6 @@ const noticePeriodSchema = new Schema<CandidateNoticePeriod>(
 
 const candidateSchema = new Schema<Candidate>(
     {
-        organizationId:{
-            type:Schema.Types.ObjectId,
-            ref:"Organization",
-            index:true
-        },
-        recruiterId:{
-            type:Schema.Types.ObjectId,
-            ref:"Recruiter",
-            index:true
-        },
         name:{
             type:String,
             required:true
@@ -140,15 +130,14 @@ const candidateSchema = new Schema<Candidate>(
 
 candidateSchema.index({skills:1})
 candidateSchema.index({email:1},{unique:true})
-candidateSchema.index({organizationId:1,"location.city":1,totalExperienceYears:1})
 candidateSchema.index({"location.city":1,totalExperienceYears:1,createdAt:-1})
 candidateSchema.index({currentRole:1,totalExperienceYears:1})
 candidateSchema.index({name:1})
 candidateSchema.index({phone:1},{sparse:true})
 candidateSchema.index({createdAt:-1})
 candidateSchema.index({"noticePeriod.option":1})
-candidateSchema.index({"expectedSalary":1})
-candidateSchema.index({"currentSalary":1})
+candidateSchema.index({expectedSalary:1})
+candidateSchema.index({currentSalary:1})
 candidateSchema.index({"noticePeriod.lastWorkingDay":1})
 
 noticePeriodSchema.pre("validate", async function(){
