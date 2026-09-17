@@ -1,7 +1,7 @@
 import { CandidateModel,type CandidateDocument } from "./candidate.model";
 import type { CreateCandidateInput,UpdateCandidateInput } from "./candidate.schema";
 import { isValidObjectId, type QueryFilter } from "mongoose";
-import type { Candidate, NoticePeriodOption } from "./candidate.types";
+import type { Candidate, CandidateSource, NoticePeriodOption } from "./candidate.types";
 
 // Repositories owns the Database persistence logic.
 
@@ -26,12 +26,17 @@ export type FindManyOptions = {
     sort?:Record<string,1 | -1>
 }
 
+export type PersistCandidateInput = CreateCandidateInput & {
+    source:CandidateSource;
+    sourceResumeIds?:string[];
+}
+
 function stripUndefined<T>(value:T):T{
     return JSON.parse(JSON.stringify(value))
 }
 
 class CandidateRepository{
-    async create(data:CreateCandidateInput):Promise<CandidateDocument>{
+    async create(data:PersistCandidateInput):Promise<CandidateDocument>{
         const candidate = await CandidateModel.create(
             JSON.parse(JSON.stringify(data))
         )
@@ -49,7 +54,7 @@ class CandidateRepository{
     return CandidateModel.findOne({email:email.toLowerCase()})
    }
 
-   async findMany(filter:CandidateQueryFilter={},
+   async findMany(filter:CandidateQueryFilter,
     options:FindManyOptions = {},
    ):Promise<{items:CandidateDocument[]; total:number}>{
     const query:QueryFilter<Candidate> = {}
@@ -124,6 +129,14 @@ class CandidateRepository{
     return CandidateModel.findByIdAndUpdate(id,
         {$set:stripUndefined(data)},
         {new:true,runValidators:true}
+    )
+   }
+
+   async addSourceResumeId(id:string,resumeId:string):Promise<CandidateDocument | null>{
+
+    return CandidateModel.findByIdAndUpdate(id,
+        {$addToSet:{sourceResumeIds:resumeId}},
+        {new:true}
     )
    }
 

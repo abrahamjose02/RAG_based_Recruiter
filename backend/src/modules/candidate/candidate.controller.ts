@@ -15,8 +15,10 @@ export async function createCandidate(req:Request<Record<string,never>,unknown,C
 export async function getCandidates(req:Request,res:Response):Promise<void>{
     const {page,limit,...filter} = req.query as unknown as ListCandidatesQuery
     const result = await candidateService.getCandidates(
-        JSON.parse(JSON.stringify(filter)) as CandidateQueryFilter,
-        {page,limit}
+       {
+        ...(JSON.parse(JSON.stringify(filter)) as CandidateQueryFilter),
+       },
+       {page,limit}
     )
 
     res.status(200).json({

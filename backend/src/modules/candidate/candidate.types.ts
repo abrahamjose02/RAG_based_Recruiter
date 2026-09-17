@@ -48,8 +48,6 @@ export interface CandidateNoticePeriod{
 
 export interface Candidate{
     id:string;
-    organizationId?:string;
-    recruiterId?:string;
     name:string;
     email:string;
     phone?:string;

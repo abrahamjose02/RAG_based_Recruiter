@@ -1,6 +1,6 @@
 import { AppError } from "../../errors/app-error";
 import type { CreateCandidateInput,UpdateCandidateInput } from "./candidate.schema";
-import { candidateRepository, type CandidateQueryFilter, type FindManyOptions } from "./candidate.repository";
+import { candidateRepository, PersistCandidateInput, type CandidateQueryFilter, type FindManyOptions } from "./candidate.repository";
 
 class CandidateService{
     async createCandidate(input:CreateCandidateInput){
@@ -11,8 +11,35 @@ class CandidateService{
         return candidateRepository.create({
             ...input,
             email:input.email.trim().toLowerCase(),
-            skills:this.normalizeSkills(input.skills)
+            skills:this.normalizeSkills(input.skills),
+            source:"manual"
         })
+    }
+
+    async upsertFromParsedResume(params:{input:CreateCandidateInput;resumeId:string;}){
+        const email = params.input.email.trim().toLowerCase();
+        const existing = await candidateRepository.findByEmail(email);
+        if(!existing){
+            return candidateRepository.create({
+                ...params.input,
+                email,
+                skills:this.normalizeSkills(params.input.skills),
+                source:"resume_upload",
+                sourceResumeIds:[params.resumeId]
+            })
+        }
+        await candidateRepository.updateById(existing._id.toString(),{
+            name:params.input.name,
+            phone:params.input.phone,
+            location:params.input.location,
+            skills:this.normalizeSkills(params.input.skills),
+            totalExperienceYears:params.input.totalExperienceYears,
+            currentRole:params.input.currentRole,
+            professionalSummary:params.input.professionalSummary,
+            experience:params.input.experience,
+            education:params.input.education
+        })
+        return candidateRepository.addSourceResumeId(existing._id.toString(),params.resumeId)
     }
 
     async getCandidates(filter:CandidateQueryFilter={},options:FindManyOptions={}){
