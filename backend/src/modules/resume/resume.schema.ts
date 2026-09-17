@@ -1,4 +1,4 @@
-import z from "zod";
+import z, { object } from "zod";
 import { RESUME_ALLOWED_MIME_TYPES } from "./resume.types";
 
 const objectIdString = z
@@ -45,6 +45,11 @@ export const resumeIdSchema = z.object({
 export const listResumeSchema = z.object({
     query:z.object({
         candidateId:objectIdString.optional(),
+        recruiterId:objectIdString.optional(),
+        mine:z
+            .enum(["true","false"])
+            .optional()
+            .transform((value)=> value === "true"),
         page:z.coerce.number().int().min(1).default(1),
         limit:z.coerce.number().int().min(1).max(100).default(20),
     }),

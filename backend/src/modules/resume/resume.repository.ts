@@ -25,6 +25,7 @@ class ResumeRepository {
             organizationId:input.organizationId,
             recruiterId:input.recruiterId,
             candidateId: input.candidateId,
+            ...(input.candidateId ? {candidateId:input.candidateId} : {}),
             clientDocumentId: document.clientDocumentId,
             originalFilename: document.file.name,
             storageKey: document.storage.key,
