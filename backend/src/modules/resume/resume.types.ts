@@ -32,29 +32,29 @@ export interface ResumeDocumentManifest{
 export interface ParsedExperience{
     company:string;
     role:string;
-    startDate?:string;
-    endDate?:string;
-    isCurrent?:boolean;
-    description?:string;
+    startDate?:string | undefined;
+    endDate?:string | undefined;
+    isCurrent?:boolean | undefined;
+    description?:string | undefined;
 }
 
 export interface ParsedEducation{
     institution:string;
-    degree?:string;
-    fieldOfStudy?:string;
-    startYear?:number;
-    endYear?:number;
+    degree?:string | undefined;
+    fieldOfStudy?:string | undefined;
+    startYear?:number | undefined;
+    endYear?:number | undefined;
 }
 
 export interface ParsedResumeResult{
-    name?:string;
-    email?:string;
-    phone?:string;
-    location?:CandidateLocation;
+    name?:string | undefined;
+    email?:string | undefined;
+    phone?:string | undefined;
+    location?:CandidateLocation | undefined;
     skills:string[];
-    totalExperienceYears?:number;
-    currentRole?:string;
-    professionalSummary?:string;
+    totalExperienceYears?:number | undefined;
+    currentRole?:string | undefined;
+    professionalSummary?:string | undefined;
     experience:ParsedExperience[];
     education:ParsedEducation[];
 }

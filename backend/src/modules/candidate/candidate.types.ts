@@ -1,9 +1,9 @@
 //candidate domain type
 
 export interface CandidateLocation{
-    city?:string;
-    state?:string;
-    country?:string;
+    city?:string | undefined;
+    state?:string | undefined;
+    country?:string | undefined;
 }
 
 export interface CandidateExperience{

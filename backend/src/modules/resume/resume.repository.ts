@@ -4,7 +4,9 @@ import type { UploadResumeInput } from "./resume.schema";
 import type { ParsedResumeResult, Resume, ResumeStatus } from "./resume.types";
 
 export type ResumeQueryFilter = {
-    candidateId?: string;
+    organizationId:string;
+    recruiterId?:string | undefined;
+    candidateId?: string | undefined;
 };
 
 export type FindManyResumesOptions = {
@@ -44,13 +46,19 @@ class ResumeRepository {
     }
 
     async findMany(
-        filter: ResumeQueryFilter = {},
+        filter: ResumeQueryFilter,
         options: FindManyResumesOptions = {},
     ): Promise<{ items: ResumeDocument[]; total: number }> {
-        const query: QueryFilter<Resume> = {};
+        const query: QueryFilter<Resume> = {
+            organizationId : filter.organizationId
+        };
 
         if (filter.candidateId) {
             query.candidateId = filter.candidateId;
+        }
+        
+        if(filter.recruiterId){
+            query.recruiterId = filter.recruiterId
         }
 
         const page = options.page ?? 1;

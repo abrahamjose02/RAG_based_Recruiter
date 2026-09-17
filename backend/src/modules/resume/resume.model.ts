@@ -155,6 +155,7 @@ const resumeSchema = new Schema<Resume>(
 
 resumeSchema.index({candidateId:1,createdAt:-1})
 resumeSchema.index({clientDocumentId:1,createdAt:-1})
+resumeSchema.index({ organizationId: 1, recruiterId: 1, createdAt: -1 });
 resumeSchema.index({organizationId:1,status:1,createdAt:-1})
 resumeSchema.index({status:1,createdAt:-1})
 

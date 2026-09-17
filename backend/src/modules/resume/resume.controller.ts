@@ -7,7 +7,10 @@ export async function createResume(
     req: Request<Record<string, never>, unknown, UploadResumeInput>,
     res: Response,
 ): Promise<void> {
-    const resumes = await resumeService.createResume(req.body);
+    const resumes = await resumeService.createResume({...req.body,
+        organizationId:req.recruiter!.organizationId,
+        recruiterId:req.recruiter!.recruiterId
+    });
 
     res.status(201).json({
         success: true,
@@ -18,9 +21,12 @@ export async function createResume(
 export async function getResumes(req: Request, res: Response): Promise<void> {
     const { page, limit, ...filter } = req.query as unknown as ListResumesQuery;
     const result = await resumeService.getResumes(
-        JSON.parse(JSON.stringify(filter)) as ResumeQueryFilter,
-        { page, limit },
-    );
+        {
+            ...filter,
+            organizationId:req.recruiter!.organizationId,
+        },
+        {page,limit}
+    )
 
     res.status(200).json({
         success: true,

@@ -1,10 +1,10 @@
 import { AppError } from "../../errors/app-error";
 import { candidateRepository } from "../candidate/candidate.repository";
-import { resumeRepository, type ResumeQueryFilter, type FindManyResumesOptions } from "./resume.repository";
+import { resumeRepository, type ResumeQueryFilter, type FindManyResumesOptions, CreateResumeRecordInput } from "./resume.repository";
 import type { UploadResumeInput } from "./resume.schema";
 
 class ResumeService {
-    async createResume(input: UploadResumeInput) {
+    async createResume(input: CreateResumeRecordInput) {
         if (input.candidateId) {
             const candidate = await candidateRepository.findById(input.candidateId);
 
@@ -13,10 +13,14 @@ class ResumeService {
             }
         }
 
-        return resumeRepository.createMany(input);
+        const resumes = await resumeRepository.createMany(input);
+
+        for(const resume of resumes){
+            
+        }
     }
 
-    async getResumes(filter: ResumeQueryFilter = {}, options: FindManyResumesOptions = {}) {
+    async getResumes(filter: ResumeQueryFilter, options: FindManyResumesOptions = {}) {
         return resumeRepository.findMany(filter, options);
     }
 
