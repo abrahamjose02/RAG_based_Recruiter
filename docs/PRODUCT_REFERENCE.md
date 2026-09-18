@@ -6,10 +6,13 @@ Update this file whenever a capability, entity, API, pipeline, or scope decision
 
 | Field | Value |
 | --- | --- |
-| Last updated | 2026-09-05 |
+| Last updated | 2026-09-18 |
 | Status | MVP in progress |
 | Primary user | Recruiter (not candidate-facing) |
 | Goal | Recruiter-owned talent database + grounded Recruiter AI search |
+| Current slice | Resume ingest stops at `parsed` + optional candidate attach. Next: Python AI parse service, then chunk / embed / Qdrant indexing (`indexing` → `ready`). |
+
+Related documents (not source of truth): [PYTHON_AI_SERVICE_STUDY_GUIDE.md](./PYTHON_AI_SERVICE_STUDY_GUIDE.md) — venv, uvicorn, FastAPI, Pydantic, and the Node parse contract.
 
 ---
 
@@ -117,6 +120,18 @@ Canonical entities:
 
 Every resume, candidate, and vector **must belong to an organization**. Recruiter A must never retrieve Recruiter B’s talent data.
 
+### Ownership rules (current product decision)
+
+| Entity | `organizationId` | `recruiterId` | `candidateId` |
+| --- | --- | --- | --- |
+| Resume | Required for recruiter-upload API. Tenant boundary for list/get. | Who uploaded. Stored for audit and optional `mine` filter. **Not** the access lock: any recruiter in the org can read org resumes. | Optional. Resume can exist unattached if parse has no name/email. |
+| Candidate | Required (product). Unique with email per org. | Optional / not used as access lock. | N/A. Candidate stores `sourceResumeIds`. |
+| Qdrant point | Always in payload; always injected from JWT via Node. | Optional metadata. | Required. Do not index orphan chunks with no candidate. |
+
+Clients **must not** send `organizationId` or `recruiterId` on create/list bodies. Node stamps them from the authenticated recruiter JWT.
+
+Candidate self-serve upload and candidate login remain **out of MVP**.
+
 ---
 
 ## 4. Candidate Profile
@@ -187,6 +202,15 @@ Match order:
 If match: update profile and link the new resume.  
 If no match: create a new profile.
 
+Email uniqueness is **per organization**, not global. Two companies may independently hold the same candidate email.
+
+### Code vs plan (Candidate)
+
+- Module name in code: `candidate/` (not `candidate-profile/`).
+- Extra recruiter-ops fields already on the model: `currentSalary`, `expectedSalary`, `noticePeriod`.
+- `organizationId` is **agreed required** but **not yet** on the Candidate Mongoose schema. Email is still globally unique (`{ email: 1 }`). Candidate list/get/update/delete are auth-gated but not org-scoped.
+- Ingest upserts by email via `upsertFromParsedResume` (global). Must pass `organizationId` once Candidate tenancy lands.
+
 ---
 
 ## 5. Resume entity
@@ -200,7 +224,7 @@ Source document uploaded by the recruiter. A candidate may have multiple resumes
   "_id": "resume_456",
   "organizationId": "org_123",
   "recruiterId": "rec_123",
-  "candidateProfileId": "candidate_123",
+  "candidateId": "candidate_123",
   "originalFileName": "rahul-sharma.pdf",
   "mimeType": "application/pdf",
   "fileSize": 245220,
@@ -220,6 +244,18 @@ OCR / scanned PDFs: deferred.
 
 `uploaded` → `processing` → `parsed` → `indexing` → `ready`  
 Any step may go to `failed`.
+
+Ingest today: `uploaded` → `processing` → `parsed` (and candidate attach when name+email exist). **`indexing` and `ready` are not written yet.**
+
+### Code vs plan (Resume)
+
+- Field names in code: `originalFilename`, `sizeBytes`, `errorMessage`, `candidateId` (not `candidateProfileId` / `failureReason`).
+- Also stored: `clientDocumentId`, `extractedText`, optional `parsed` blob.
+- Create stamps `organizationId` + `recruiterId` from JWT. Storage key must start with `organizations/{organizationId}/resumes/`.
+- List is org-scoped. Optional query: `candidateId`, `recruiterId`, `mine=true` (current recruiter’s uploads).
+- Get-by-id is `findOne({ _id, organizationId })`.
+- `candidateId` on POST is optional; if sent, candidate must exist (should also be same-org once Candidate is tenant-scoped).
+- Multipart resume binaries are rejected (`415`). JSON document manifests only.
 
 ---
 
@@ -393,13 +429,13 @@ Domain-oriented modules:
 
 ```text
 src/modules/
-  recruiter/
-  organization/
-  resume/
-  candidate-profile/   # current code uses candidate/
-  job/
-  shortlist/
-  recruiter-chat/
+  recruiter/        # exists: register, login, JWT, me, list, deactivate
+  organization/     # exists: CRUD
+  resume/           # exists: manifest create/list/get + ingest orchestration
+  candidate/        # exists: CRUD + ingest upsert (org scope still incomplete)
+  job/              # deferred
+  shortlist/        # deferred
+  recruiter-chat/   # deferred
 ```
 
 Per-module flow:
@@ -457,6 +493,15 @@ Separate:
 Do not combine all AI functions into one large service.  
 Do not start with LangChain/LangGraph unless they solve a concrete orchestration problem.
 
+There is **no `ai-service/` in the repo yet**. Node already calls:
+
+| Method | Path | When | Status |
+| --- | --- | --- | --- |
+| POST | `/v1/parse-resume` | After resume row is created; body `{ text }` | Client exists (`python-ai.client.ts`). Python service missing. Contract: `{ success: true, data: ParsedResumeResult }`. |
+| POST | `/v1/index-resume` | After candidate attach; chunk + embed + Qdrant | **Not started.** Must include `organization_id`, `candidate_profile_id`, `resume_id`. |
+
+Do not index a resume that has no candidate (no name/email). Recruiters search people, not orphan chunks.
+
 ---
 
 ## 10. Resume ingestion pipeline
@@ -487,13 +532,19 @@ Python chunks + embeds + indexes in Qdrant
 Resume status = ready
 ```
 
+**Implemented through Node today:** auth, org/recruiter stamp, storage-key org check, Resume create, fire-and-forget `scheduleResumeIngest`, Python parse HTTP client, Candidate upsert/attach when parse has name+email.
+
+**Not implemented:** Python process, Qdrant index call, status `indexing` / `ready`, `indexedChunks` write after vectors.
+
+If parse has no name/email, status stays `parsed` and `candidateId` stays unset. That is valid.
+
 MVP may run this synchronously. Async queues, retries, and DLQ are deferred.
 
 ---
 
 ## 11. Chunking, embeddings, Qdrant
 
-Do not embed an entire resume as one vector.
+**Not started in the repo.** Do not embed an entire resume as one vector. Only index after a Candidate exists.
 
 Preferred chunk types:
 
@@ -686,24 +737,21 @@ Company enrichment is deferred.
 
 ### MVP (do this)
 
-1. Recruiter authentication
-2. PDF and DOCX selection
-3. Browser text extraction
-4. S3 direct upload
-5. Document manifest submission
-6. Resume metadata creation
-7. Structured candidate extraction
-8. Candidate Profile creation
-9. Candidate deduplication
-10. Chunk creation
-11. Embeddings
-12. Qdrant indexing
-13. Recruiter semantic search
-14. Metadata filtering
-15. Top-K candidate retrieval
-16. Candidate-level aggregation
-17. Basic ranking
-18. Recruiter AI response
+| # | Item | Status |
+| --- | --- | --- |
+| 1 | Recruiter authentication | `done` (JWT; recruiter belongs to an organization) |
+| 2 | PDF and DOCX selection | `planned` (frontend) |
+| 3 | Browser text extraction | `planned` (frontend) |
+| 4 | S3 direct upload | `planned` (presign API not built; key shape is already validated) |
+| 5 | Document manifest submission | `done` for the Node API |
+| 6 | Resume metadata creation | `done` (org-scoped) |
+| 7 | Structured candidate extraction | `in progress` (Node client; Python `/v1/parse-resume` missing) |
+| 8 | Candidate Profile creation | `in progress` (manual CRUD + ingest upsert; not org-unique yet) |
+| 9 | Candidate deduplication | `in progress` (email upsert; must become org+email) |
+| 10–12 | Chunk + embeddings + Qdrant | `planned` — **next backend slice after parse service** |
+| 13–18 | Recruiter semantic search, filters, aggregation, ranking, grounded AI | `planned` — after vectors exist |
+
+Do not start Recruiter chat collections, jobs, or hybrid/RRF until retrieval returns real people.
 
 ### Do not block MVP on
 
@@ -733,26 +781,42 @@ Teaching concepts this project should implement over time: RAG, embeddings, Qdra
 
 ## 16. Implementation snapshot
 
-Update this section when the repo changes. Snapshot date: **2026-09-05**.
+Update this section when the repo changes. Snapshot date: **2026-09-18**.
 
 ### Exists today
 
 | Area | Location | Notes |
 | --- | --- | --- |
-| Node Express app | `backend/src/app.ts` | Helmet, CORS, JSON 1mb, health + candidates |
-| Env validation | `backend/src/config/env.ts` | `NODE_ENV`, `PORT`, `MONGODB_URI`, `CORS_ORIGIN` |
+| Node Express app | `backend/src/app.ts` | Helmet, CORS, JSON 5mb (manifests), health, candidates, resumes, organization, recruiters |
+| Env validation | `backend/src/config/env.ts` | `NODE_ENV`, `PORT`, `MONGODB_URI`, `CORS_ORIGIN`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `BCRYPT_ROUNDS`, `PYTHON_AI_BASE_URL` (default `http://localhost:8000`) |
 | MongoDB connection | `backend/src/config/database.ts` | Mongoose |
-| Health module | `backend/src/modules/health/` | `GET /api/v1/health` |
-| Candidate CRUD | `backend/src/modules/candidate/` | Routes, Zod (including list filters), controller, service, repository, model |
-| Resume manifest ingestion | `backend/src/modules/resume/` | Mounted at `/api/v1/resumes`; accepts JSON document manifests from the client, persists client-extracted text, and rejects multipart resume binaries |
+| Health | `backend/src/modules/health/` | `GET /api/v1/health` |
+| Organization | `backend/src/modules/organization/` | CRUD at `/api/v1/organization` |
+| Recruiter auth | `backend/src/modules/recruiter/` + `auth.middleware.ts` | Register, login, JWT payload `{ recruiterId, organizationId, email, role }`, `GET /me`, list, deactivate |
+| Candidate CRUD | `backend/src/modules/candidate/` | Auth required. Manual CRUD + ingest upsert by email. **Not org-scoped in queries/indexes yet.** |
+| Resume module | `backend/src/modules/resume/` | Auth required. Manifest create (stamps org/recruiter, storage-key check, schedules ingest), org-scoped list/get |
+| Python AI client | `backend/src/services/python-ai.client.ts` | `POST /v1/parse-resume` only |
 
-Candidate HTTP API currently mounted:
+Mounted HTTP APIs:
 
-- `POST /api/v1/candidates`
-- `GET /api/v1/candidates`
-- `GET /api/v1/candidates/:id`
-- `PATCH /api/v1/candidates/:id`
-- `DELETE /api/v1/candidates/:id`
+**Recruiters** (`/api/v1/recruiters`)
+
+- `POST /register`, `POST /login`
+- `GET /me`, `GET /`, `DELETE /:id` (auth)
+
+**Organization** (`/api/v1/organization`)
+
+- `POST /`, `GET /`, `GET /:id`, `PATCH /:id`, `DELETE /:id`
+
+**Resumes** (`/api/v1/resumes`, auth)
+
+- `POST /` — JSON manifest, 1–25 documents, optional `candidateId`
+- `GET /` — org list; query `candidateId`, `recruiterId`, `mine`, `page`, `limit`
+- `GET /:id` — org-scoped
+
+**Candidates** (`/api/v1/candidates`, auth)
+
+- `POST /`, `GET /`, `GET /:id`, `PATCH /:id`, `DELETE /:id`
 
 ### Extra fields already on Candidate (beyond the original JSON example)
 
@@ -764,26 +828,36 @@ These are recruiter-ops fields. Keep them in MongoDB; they are not a substitute 
 
 ### Not started
 
-- Next.js frontend
-- Recruiter / Organization modules and authentication
-- Python AI service
-- Qdrant
-- S3 + presigned uploads
+- Next.js frontend (auth UI, file pick, client text extraction, S3 upload, talent UI, Recruiter AI chat)
+- Python AI service (`ai-service/`)
+- Qdrant collection, chunking, embeddings, indexing
+- Node `index-resume` client and ingest statuses `indexing` / `ready`
+- S3 + presigned upload generation
 - Recruiter chat / search session
 - Jobs, shortlists
-- Chunking, embeddings, ranking, RAG
+- Ranking, RAG generation
+
+### Next implementation slice (agreed)
+
+1. FastAPI `POST /v1/parse-resume` matching Node’s `resumeAiResponseSchema`.
+2. Candidate `organizationId` + unique `{ organizationId, email }`; stamp org from JWT; scope candidate CRUD and ingest upsert.
+3. FastAPI `POST /v1/index-resume`: structural chunks, sentence-transformers, Qdrant points with `organization_id`.
+4. Node ingest: after candidate attach → `indexing` → index call → `ready` + `indexedChunks`. Skip index when there is no candidate.
+5. Only then: org-scoped semantic search (section 12).
 
 ### Known deviations from the original plan
 
 | Plan | Current code | Decision |
 | --- | --- | --- |
 | Module name `candidate-profile` | `candidate` | Keep `candidate` unless we rename later |
-| `organizationId` / `recruiterId` on every record | Optional on Candidate and Resume models; not accepted on create/update APIs | Auth will populate these; clients must not send tenant IDs |
-| `sourceResumeIds` on profile | Present on Candidate (`source` defaults to `manual`) | Ingestion will append resume IDs |
-| S3 presigned upload | Document manifest schema exists; presigned URL generation not implemented | Backend should not accept multipart resume binaries |
-| `originalFileName` / `fileSize` / `failureReason` | `originalFilename` / `sizeBytes` / `errorMessage` | Keep current names unless we standardize |
-| Resume HTTP module | Manifest create/list/read routes mounted | Backend accepts JSON manifests only; PDF/DOCX parsing stays in the client |
-| Unique candidate email globally | Still unique on `email`; org+email index added | Switch uniqueness to per-organization when auth exists |
+| `organizationId` / `recruiterId` on every record | Resume create/list/get stamp and filter org from JWT. Candidate still lacks org field/index | Finish Candidate tenancy before Qdrant payloads; clients never send tenant IDs |
+| Resume access = uploader only | Org-wide list; optional `mine` / `recruiterId` | Recruiter ID is attribution, not the tenant lock |
+| Resume always linked to a candidate | `candidateId` optional; ingest skips profile create without name/email | Allowed. Do not vector-index unattached resumes |
+| `sourceResumeIds` on profile | Present; ingest appends on upsert/attach | Keep |
+| S3 presigned upload | Manifest + key regex exist; presign API not implemented | Backend must not accept multipart resume binaries |
+| `originalFileName` / `fileSize` / `failureReason` / `candidateProfileId` | `originalFilename` / `sizeBytes` / `errorMessage` / `candidateId` | Keep current names |
+| Unique candidate email globally | Still `{ email: 1 }` unique | Switch to `{ organizationId, email }` unique |
+| JSON body size 1mb | `express.json({ limit: "5mb" })` | Needed for extracted-text manifests |
 
 ---
 
@@ -791,16 +865,17 @@ These are recruiter-ops fields. Keep them in MongoDB; they are not a substitute 
 
 | Capability | Status |
 | --- | --- |
-| Recruiter authentication | `planned` |
-| Organization tenancy | `planned` |
-| Candidate CRUD (manual) | `in progress` |
-| Resume metadata model | `in progress` |
-| PDF/DOCX MIME allow-list | `in progress` |
+| Recruiter authentication | `done` |
+| Organization tenancy | `in progress` (org + recruiter + resume scoped; candidate/Qdrant not yet) |
+| Candidate CRUD (manual) | `in progress` (auth on; not org-filtered) |
+| Resume metadata model | `done` for recruiter-upload metadata |
+| PDF/DOCX MIME allow-list | `done` on manifest schema |
 | Browser text extraction | `planned` |
 | S3 presigned upload | `planned` |
-| Document manifest API | `in progress` |
-| Python structured parse | `planned` |
-| Candidate deduplication | `planned` |
+| Document manifest API | `done` |
+| Resume ingest orchestration | `in progress` (parse + candidate attach; no index) |
+| Python structured parse | `in progress` (Node client; no FastAPI service) |
+| Candidate deduplication | `in progress` (global email; must be per-org) |
 | Chunking + embeddings | `planned` |
 | Qdrant indexing | `planned` |
 | Semantic search + filters | `planned` |
@@ -819,3 +894,5 @@ These are recruiter-ops fields. Keep them in MongoDB; they are not a substitute 
 
 - **2026-09-05** — Created this reference from the product plan. Recorded current backend snapshot (health + candidate CRUD, resume model not routed, no frontend/AI/Qdrant/S3).
 - **2026-09-05** — Aligned existing backend models: optional `organizationId`/`recruiterId`, candidate `source`/`sourceResumeIds`, ObjectId lookup bugfix, list-candidate query wiring. Auth, S3, Python, and Qdrant remain unstarted.
+- **2026-09-18** — Synced with repo: JWT recruiter auth, organization module, org-scoped resume manifest API, ingest to `parsed` + optional candidate link, Python parse client only. Recorded ownership (resume is org-owned; `candidateId` optional; `recruiterId` is uploader). Next slice: FastAPI parse, candidate org uniqueness, Qdrant indexing, then Recruiter AI search. Frontend, S3 presign, jobs, and chat remain unstarted.
+- **2026-09-18** — Pointed to `docs/PYTHON_AI_SERVICE_STUDY_GUIDE.md` from Related documents (not from the Python AI architecture section).
