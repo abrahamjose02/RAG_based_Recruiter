@@ -38,12 +38,12 @@ class ResumeRepository {
         return ResumeModel.insertMany(resumes, { ordered: true });
     }
 
-    async findById(id: string): Promise<ResumeDocument | null> {
+    async findById(id: string,organizationId:string): Promise<ResumeDocument | null> {
         if (!isValidObjectId(id)) {
             return null;
         }
 
-        return ResumeModel.findById(id);
+        return ResumeModel.findOne({_id:id,organizationId});
     }
 
     async findMany(

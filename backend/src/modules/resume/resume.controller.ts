@@ -19,11 +19,13 @@ export async function createResume(
 }
 
 export async function getResumes(req: Request, res: Response): Promise<void> {
-    const { page, limit, ...filter } = req.query as unknown as ListResumesQuery;
+    const { page, limit, candidateId,recruiterId,mine } = req.query as unknown as ListResumesQuery;
     const result = await resumeService.getResumes(
         {
-            ...filter,
             organizationId:req.recruiter!.organizationId,
+            ...(candidateId ?  {candidateId} : {}),
+            ...(mine ? {recruiterId:req.recruiter!.recruiterId} : {}),
+            ...(!mine && recruiterId ? {recruiterId} : {} )
         },
         {page,limit}
     )
@@ -35,7 +37,7 @@ export async function getResumes(req: Request, res: Response): Promise<void> {
 }
 
 export async function getResumeById(req: Request<ResumeIdParams>, res: Response): Promise<void> {
-    const resume = await resumeService.getResumeById(req.params.id);
+    const resume = await resumeService.getResumeById(req.params.id,req.recruiter!.organizationId);
 
     res.status(200).json({
         success: true,

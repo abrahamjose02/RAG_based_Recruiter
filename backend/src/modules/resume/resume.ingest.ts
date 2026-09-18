@@ -1,5 +1,6 @@
 import { parseResumeText } from "../../services/python-ai.client";
 import { logger } from "../../utils/logger";
+import { candidateRepository } from "../candidate/candidate.repository";
 import { candidateService } from "../candidate/candidate.service";
 import { mapParsedResumeToCandidateInput } from "./resume.mapper";
 import { ResumeDocument } from "./resume.model";
@@ -17,6 +18,11 @@ export async function ingestResume(resume:ResumeDocument):Promise<void>{
             parsed,
             errorMessage:null
         })
+
+        if(resume.candidateId){
+            await candidateRepository.addSourceResumeId(resume.candidateId.toString(),resumeId)
+            return;
+        }
 
         const candidateInput = mapParsedResumeToCandidateInput(parsed)
         if(!candidateInput){

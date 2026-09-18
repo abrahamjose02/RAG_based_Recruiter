@@ -1,10 +1,23 @@
 import { AppError } from "../../errors/app-error";
 import { candidateRepository } from "../candidate/candidate.repository";
+import { scheduleResumeIngest } from "./resume.ingest";
 import { resumeRepository, type ResumeQueryFilter, type FindManyResumesOptions, CreateResumeRecordInput } from "./resume.repository";
 import type { UploadResumeInput } from "./resume.schema";
 
+
+function assertStorageKeyBelongsToOrganization(documents:CreateResumeRecordInput["documents"],organizationId:string):void{
+    const prefix = `organizations/${organizationId}/resumes/`;
+
+    for(const document of documents){
+        if(!document.storage.key.toLowerCase().startsWith(prefix.toLowerCase())){
+            throw new AppError("Resume storage key does not belong to this organization", 400);
+        }
+    }
+}
+
 class ResumeService {
     async createResume(input: CreateResumeRecordInput) {
+        assertStorageKeyBelongsToOrganization(input.documents,input.organizationId)
         if (input.candidateId) {
             const candidate = await candidateRepository.findById(input.candidateId);
 
@@ -16,7 +29,7 @@ class ResumeService {
         const resumes = await resumeRepository.createMany(input);
 
         for(const resume of resumes){
-            
+            scheduleResumeIngest(resume)
         }
     }
 
@@ -24,8 +37,8 @@ class ResumeService {
         return resumeRepository.findMany(filter, options);
     }
 
-    async getResumeById(id: string) {
-        const resume = await resumeRepository.findById(id);
+    async getResumeById(id: string,organizationId:string) {
+        const resume = await resumeRepository.findById(id,organizationId);
 
         if (!resume) {
             throw new AppError("Resume not found", 404);
