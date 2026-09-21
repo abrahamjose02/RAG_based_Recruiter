@@ -1,4 +1,5 @@
-from pydantic import BaseModel,EmailStr
+from dataclasses import field
+from pydantic import BaseModel,EmailStr, Field
 
 class Location(BaseModel):
     city: str | None = None
@@ -14,25 +15,41 @@ class Experience(BaseModel):
     description: str | None = None
 
 class Education(BaseModel):
-    nstitution: str
+    institution: str
     degree: str | None = None
     fieldOfStudy: str | None = None
     startYear: int | None = None
     endYear: int | None = None
 
 class ParsedResumeData(BaseModel):
-    name:str | None = None
-    email:str | None = None
+
+    """
+    Contract Node validates with resumeAiResponseSchema.
+    name and email are required so a Candidate can be created.
+    """
+    name:str = Field(min_length=1)
+    email:EmailStr
     phone:str | None = None
     location:Location | None = None
-    skills:list[str] = []
+    skills:list[str] = Field(default_factory=list)
     totalExperienceYears:float | None = None
     currentRole:str | None = None
     professionalSummary:str | None = None
-    experience:list[Experience] = []
-    education:list[Education] = []
+    experience:list[Experience] = Field(default_factory=list)
+    education:list[Education] = Field(default_factory=list)
 
-class ParsedResumeRequest(BaseModel):
+class LlmResumeFields(BaseModel):
+    name:str = Field(min_length=1)
+    email:EmailStr
+    location:Location | None = None
+    skills: list[str] = []
+    totalExperienceYears: float | None = None
+    currentRole: str | None = None
+    professionalSummary: str | None = None
+    experience: list[Experience] = []
+    education: list[Education] = []
+
+class ParseResumeRequest(BaseModel):
     text:str
 
 class ParseResumeResponse(BaseModel):

@@ -10,7 +10,7 @@ Update this file whenever a capability, entity, API, pipeline, or scope decision
 | Status | MVP in progress |
 | Primary user | Recruiter (not candidate-facing) |
 | Goal | Recruiter-owned talent database + grounded Recruiter AI search |
-| Current slice | Resume ingest stops at `parsed` + optional candidate attach. Next: Python AI parse service, then chunk / embed / Qdrant indexing (`indexing` → `ready`). |
+| Current slice | Resume ingest stops at `parsed` + optional candidate attach. Next: Python AI parse (`email`/`phone` from extracted text; remaining `ParsedResumeData` fields from LLM JSON), then chunk / embed / Qdrant indexing (`indexing` → `ready`). |
 
 Related documents (not source of truth): [PYTHON_AI_SERVICE_STUDY_GUIDE.md](./PYTHON_AI_SERVICE_STUDY_GUIDE.md) — venv, uvicorn, FastAPI, Pydantic, and the Node parse contract.
 
@@ -310,7 +310,7 @@ Ingest today: `uploaded` → `processing` → `parsed` (and candidate attach whe
 | --- | --- | --- |
 | Next.js | Auth UI, file pick, client text extraction, S3 upload, talent UI, Recruiter AI chat | Skill normalization, embeddings, ranking, LLM parsing |
 | Node.js | Auth, orgs, recruiters, resume metadata, candidate profiles, jobs, shortlists, authorization, MongoDB, orchestration | Vector search internals, embedding generation |
-| Python AI | Structured parse, normalize, chunk, embed, index, retrieve, rank, RAG generation | Recruiter auth, tenant authorization, MongoDB source of truth |
+| Python AI | Hybrid structured parse (deterministic `email`/`phone` + LLM JSON for all other schema fields), normalize, chunk, embed, index, retrieve, rank, RAG generation | Recruiter auth, tenant authorization, MongoDB source of truth |
 | MongoDB | Business source of truth | Dense vectors |
 | Qdrant | Chunks, embeddings, retrieval metadata | Recruiter accounts, jobs, shortlists |
 | S3 | Original resume files | Parsed candidate records |
@@ -486,18 +486,61 @@ ai-service/
 
 Separate:
 
-- text extraction (frontend)
-- entity extraction (parser)
-- normalization (normalizer)
+- text extraction (frontend) — raw `extractedText` only
+- entity extraction (parser) — hybrid, see below
+- normalization (normalizer) — canonical skills, location, experience years
 
 Do not combine all AI functions into one large service.  
 Do not start with LangChain/LangGraph unless they solve a concrete orchestration problem.
 
-There is **no `ai-service/` in the repo yet**. Node already calls:
+### Resume parse strategy (agreed)
+
+Resumes do not share one layout. Do **not** regex-parse name, skills, experience, education, or similar fields. Those need model reasoning.
+
+`POST /v1/parse-resume` receives `{ text }` (`extractedText` from the manifest). The parser returns one `ParsedResumeData` object:
+
+| Field | How it is filled |
+| --- | --- |
+| `email` | Deterministic extract from `extractedText` (regex / pattern). If none found → `null`. |
+| `phone` | Deterministic extract from `extractedText` (regex / pattern). If none found → `null`. |
+| `name` | LLM structured JSON |
+| `location` | LLM structured JSON |
+| `skills` | LLM structured JSON |
+| `totalExperienceYears` | LLM structured JSON |
+| `currentRole` | LLM structured JSON |
+| `professionalSummary` | LLM structured JSON |
+| `experience` | LLM structured JSON |
+| `education` | LLM structured JSON |
+
+Parse flow:
+
+```text
+extractedText
+        ↓
+Code extracts email + phone (must be substrings of the source text)
+        ↓
+LLM returns JSON matching the rest of ParsedResumeData
+        ↓
+Merge: code-owned email/phone overwrite any LLM email/phone
+        ↓
+Pydantic validates the combined object
+        ↓
+{ success: true, data }
+```
+
+Rules:
+
+- LLM output **must** match `ParsedResumeData` / Node `parsedResumeResultSchema`. Missing LLM fields are `null` or `[]`, never invented.
+- Code **owns** `email` and `phone`. Do not keep an LLM email or phone if it was not extracted from `extractedText`.
+- If `email` or `phone` is absent, leave it `null`. Do not guess from filename or general knowledge.
+- Name/email still gate candidate create: no name+email → status `parsed`, no `candidateId`, no vector index.
+- Normalization (`resume_normalizer.py`) runs after this merge. It does not re-extract entities.
+
+`ai-service/` exists as stubs (`schemas/resume.py`, `services/resume_parser.py`, `api/routes/resumes.py`, `main.py`). Node already calls:
 
 | Method | Path | When | Status |
 | --- | --- | --- | --- |
-| POST | `/v1/parse-resume` | After resume row is created; body `{ text }` | Client exists (`python-ai.client.ts`). Python service missing. Contract: `{ success: true, data: ParsedResumeResult }`. |
+| POST | `/v1/parse-resume` | After resume row is created; body `{ text }` | Client exists (`python-ai.client.ts`). FastAPI route/LLM merge not implemented. Contract: `{ success: true, data: ParsedResumeResult }`. |
 | POST | `/v1/index-resume` | After candidate attach; chunk + embed + Qdrant | **Not started.** Must include `organization_id`, `candidate_profile_id`, `resume_id`. |
 
 Do not index a resume that has no candidate (no name/email). Recruiters search people, not orphan chunks.
@@ -523,7 +566,7 @@ Node creates Resume records
         ↓
 Node sends extracted text to Python AI
         ↓
-Python structured parse + normalize
+Python: extract email/phone from text; LLM fills remaining ParsedResumeData; normalize
         ↓
 Node creates/updates Candidate Profile
         ↓
@@ -534,7 +577,7 @@ Resume status = ready
 
 **Implemented through Node today:** auth, org/recruiter stamp, storage-key org check, Resume create, fire-and-forget `scheduleResumeIngest`, Python parse HTTP client, Candidate upsert/attach when parse has name+email.
 
-**Not implemented:** Python process, Qdrant index call, status `indexing` / `ready`, `indexedChunks` write after vectors.
+**Not implemented:** FastAPI parse (regex email/phone + LLM JSON for other fields), Qdrant index call, status `indexing` / `ready`, `indexedChunks` write after vectors.
 
 If parse has no name/email, status stays `parsed` and `candidateId` stays unset. That is valid.
 
@@ -745,7 +788,7 @@ Company enrichment is deferred.
 | 4 | S3 direct upload | `planned` (presign API not built; key shape is already validated) |
 | 5 | Document manifest submission | `done` for the Node API |
 | 6 | Resume metadata creation | `done` (org-scoped) |
-| 7 | Structured candidate extraction | `in progress` (Node client; Python `/v1/parse-resume` missing) |
+| 7 | Structured candidate extraction | `in progress` (Node client; hybrid parse agreed: regex email/phone + LLM JSON for other fields; FastAPI not wired) |
 | 8 | Candidate Profile creation | `in progress` (manual CRUD + ingest upsert; not org-unique yet) |
 | 9 | Candidate deduplication | `in progress` (email upsert; must become org+email) |
 | 10–12 | Chunk + embeddings + Qdrant | `planned` — **next backend slice after parse service** |
@@ -796,6 +839,7 @@ Update this section when the repo changes. Snapshot date: **2026-09-18**.
 | Candidate CRUD | `backend/src/modules/candidate/` | Auth required. Manual CRUD + ingest upsert by email. **Not org-scoped in queries/indexes yet.** |
 | Resume module | `backend/src/modules/resume/` | Auth required. Manifest create (stamps org/recruiter, storage-key check, schedules ingest), org-scoped list/get |
 | Python AI client | `backend/src/services/python-ai.client.ts` | `POST /v1/parse-resume` only |
+| Python AI stubs | `ai-service/` | Pydantic `ParsedResumeData`, empty FastAPI `main.py`, parser stub. LLM parse + `/v1/parse-resume` not wired. |
 
 Mounted HTTP APIs:
 
@@ -829,7 +873,7 @@ These are recruiter-ops fields. Keep them in MongoDB; they are not a substitute 
 ### Not started
 
 - Next.js frontend (auth UI, file pick, client text extraction, S3 upload, talent UI, Recruiter AI chat)
-- Python AI service (`ai-service/`)
+- FastAPI `POST /v1/parse-resume` (hybrid: regex email/phone + LLM JSON for remaining schema fields)
 - Qdrant collection, chunking, embeddings, indexing
 - Node `index-resume` client and ingest statuses `indexing` / `ready`
 - S3 + presigned upload generation
@@ -839,7 +883,7 @@ These are recruiter-ops fields. Keep them in MongoDB; they are not a substitute 
 
 ### Next implementation slice (agreed)
 
-1. FastAPI `POST /v1/parse-resume` matching Node’s `resumeAiResponseSchema`.
+1. FastAPI `POST /v1/parse-resume` matching Node’s `resumeAiResponseSchema`: extract `email`/`phone` from `extractedText`; LLM fills all other `ParsedResumeData` fields; merge and validate.
 2. Candidate `organizationId` + unique `{ organizationId, email }`; stamp org from JWT; scope candidate CRUD and ingest upsert.
 3. FastAPI `POST /v1/index-resume`: structural chunks, sentence-transformers, Qdrant points with `organization_id`.
 4. Node ingest: after candidate attach → `indexing` → index call → `ready` + `indexedChunks`. Skip index when there is no candidate.
@@ -858,6 +902,7 @@ These are recruiter-ops fields. Keep them in MongoDB; they are not a substitute 
 | `originalFileName` / `fileSize` / `failureReason` / `candidateProfileId` | `originalFilename` / `sizeBytes` / `errorMessage` / `candidateId` | Keep current names |
 | Unique candidate email globally | Still `{ email: 1 }` unique | Switch to `{ organizationId, email }` unique |
 | JSON body size 1mb | `express.json({ limit: "5mb" })` | Needed for extracted-text manifests |
+| Regex/heuristic parse of the full resume | Hybrid parse: code extracts `email`/`phone` from `extractedText`; LLM structured JSON fills every other `ParsedResumeData` field | Keep. LLM must not invent contact fields; missing values stay `null`/`[]` |
 
 ---
 
@@ -874,7 +919,7 @@ These are recruiter-ops fields. Keep them in MongoDB; they are not a substitute 
 | S3 presigned upload | `planned` |
 | Document manifest API | `done` |
 | Resume ingest orchestration | `in progress` (parse + candidate attach; no index) |
-| Python structured parse | `in progress` (Node client; no FastAPI service) |
+| Python structured parse | `in progress` (Node client; `ai-service` stubs; hybrid email/phone + LLM JSON agreed, not implemented) |
 | Candidate deduplication | `in progress` (global email; must be per-org) |
 | Chunking + embeddings | `planned` |
 | Qdrant indexing | `planned` |
@@ -896,3 +941,4 @@ These are recruiter-ops fields. Keep them in MongoDB; they are not a substitute 
 - **2026-09-05** — Aligned existing backend models: optional `organizationId`/`recruiterId`, candidate `source`/`sourceResumeIds`, ObjectId lookup bugfix, list-candidate query wiring. Auth, S3, Python, and Qdrant remain unstarted.
 - **2026-09-18** — Synced with repo: JWT recruiter auth, organization module, org-scoped resume manifest API, ingest to `parsed` + optional candidate link, Python parse client only. Recorded ownership (resume is org-owned; `candidateId` optional; `recruiterId` is uploader). Next slice: FastAPI parse, candidate org uniqueness, Qdrant indexing, then Recruiter AI search. Frontend, S3 presign, jobs, and chat remain unstarted.
 - **2026-09-18** — Pointed to `docs/PYTHON_AI_SERVICE_STUDY_GUIDE.md` from Related documents (not from the Python AI architecture section).
+- **2026-09-18** — Agreed resume parse: deterministic `email`/`phone` from `extractedText`; LLM structured JSON fills all other `ParsedResumeData` fields. Code-owned contacts overwrite any LLM email/phone. Recorded `ai-service/` stubs in the snapshot.

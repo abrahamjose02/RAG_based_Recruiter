@@ -2,16 +2,11 @@ import type { CreateCandidateInput } from "../candidate/candidate.schema";
 import type { ParsedResumeResult } from "./resume.types";
 
 export function mapParsedResumeToCandidateInput(parsed:ParsedResumeResult):CreateCandidateInput | null {
-    const email = parsed.email?.trim().toLowerCase();
-    const name = parsed.name?.trim()
-
-    if(!email || !name){
-        return null
-    }
-
+    // const email = parsed.email?.trim().toLowerCase();
+    // const name = parsed.name?.trim()
     return {
-        name,
-        email,
+        name:parsed.name.trim(),
+        email:parsed.email.trim(),
         phone:parsed.phone,
         location: parsed.location,
         skills: parsed.skills ?? [],

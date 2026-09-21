@@ -79,8 +79,8 @@ const parsedEducationSchema = z.object({
   });
 
   export const parsedResumeResultSchema = z.object({
-    name: z.string().trim().optional(),
-    email: z.string().trim().email().optional(),
+    name: z.string().trim().min(1),
+    email: z.string().trim().email(),
     phone: z.string().trim().optional(),
     location: parsedLocationSchema.optional(),
     skills: z.array(z.string().trim().min(1)).default([]),
