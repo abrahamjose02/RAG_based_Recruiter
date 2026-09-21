@@ -6,8 +6,8 @@ export function mapParsedResumeToCandidateInput(parsed:ParsedResumeResult):Creat
     // const name = parsed.name?.trim()
     return {
         name:parsed.name.trim(),
-        email:parsed.email.trim(),
-        phone:parsed.phone,
+        email:parsed.email.trim().toLowerCase(),
+        ...(parsed.phone ? {phone:parsed.phone} : {}),
         location: parsed.location,
         skills: parsed.skills ?? [],
         totalExperienceYears: parsed.totalExperienceYears ?? 0,

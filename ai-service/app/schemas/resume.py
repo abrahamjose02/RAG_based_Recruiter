@@ -38,17 +38,6 @@ class ParsedResumeData(BaseModel):
     experience:list[Experience] = Field(default_factory=list)
     education:list[Education] = Field(default_factory=list)
 
-class LlmResumeFields(BaseModel):
-    name:str = Field(min_length=1)
-    email:EmailStr
-    location:Location | None = None
-    skills: list[str] = []
-    totalExperienceYears: float | None = None
-    currentRole: str | None = None
-    professionalSummary: str | None = None
-    experience: list[Experience] = []
-    education: list[Education] = []
-
 class ParseResumeRequest(BaseModel):
     text:str
 
