@@ -75,17 +75,18 @@ class ResumeRepository {
         return { items, total };
     }
 
-    async updateStatus(id:string,status:ResumeStatus,extra:{parsed?:ParsedResumeResult;errorMessage?: string | null} = {}):Promise<ResumeDocument | null>{
+    async updateStatus(id:string,status:ResumeStatus,extra:{parsed?:ParsedResumeResult;errorMessage?: string | null,indexedChunks?:number} = {}):Promise<ResumeDocument | null>{
         return ResumeModel.findByIdAndUpdate(id,
             {
                 $set:{
                     status,
                     ...(extra.parsed? { parsed : extra.parsed } : {}),
                     ...(extra.errorMessage !== undefined ? {errorMessage:extra.errorMessage} : {}),
+                    ...(extra.indexedChunks !== undefined ? {indexedChunks:extra.indexedChunks} : {})
                 },
             },
             {new : true}
-        )
+        );
     }
 
     async attachCandidate(id:string,candidateId:string):Promise<ResumeDocument | null >{
