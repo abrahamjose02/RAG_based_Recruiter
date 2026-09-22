@@ -9,9 +9,7 @@ export function authMiddleware(req:Request,_res:Response,next:NextFunction):void
             throw new AppError("Missing or invalid authorization header",401)
         }
         const token = authHead.substring(7)
-        const payload = verifyToken(token)
-
-        req.recruiter = payload;
+        req.recruiter = verifyToken(token)
         next()
     } catch (error) {
         if(error instanceof AppError){
@@ -26,8 +24,7 @@ export function optionalAuthMiddleware(req:Request,_res:Response,next:NextFuncti
         const authHeader = req.headers.authorization;
         if(authHeader && authHeader.startsWith("Bearer ")){
             const token = authHeader.substring(7)
-            const payload = verifyToken(token)
-            req.recruiter = payload
+            req.recruiter = verifyToken(token)
         }
     } catch (error) {
 

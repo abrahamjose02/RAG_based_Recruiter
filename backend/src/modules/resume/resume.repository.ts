@@ -4,7 +4,6 @@ import type { UploadResumeInput } from "./resume.schema";
 import type { ParsedResumeResult, Resume, ResumeStatus } from "./resume.types";
 
 export type ResumeQueryFilter = {
-    organizationId:string;
     recruiterId?:string | undefined;
     candidateId?: string | undefined;
 };
@@ -38,21 +37,19 @@ class ResumeRepository {
         return ResumeModel.insertMany(resumes, { ordered: true });
     }
 
-    async findById(id: string,organizationId:string): Promise<ResumeDocument | null> {
+    async findById(id: string): Promise<ResumeDocument | null> {
         if (!isValidObjectId(id)) {
             return null;
         }
 
-        return ResumeModel.findOne({_id:id,organizationId});
+        return ResumeModel.findById(id);
     }
 
     async findMany(
         filter: ResumeQueryFilter,
         options: FindManyResumesOptions = {},
     ): Promise<{ items: ResumeDocument[]; total: number }> {
-        const query: QueryFilter<Resume> = {
-            organizationId : filter.organizationId
-        };
+        const query: QueryFilter<Resume> = {};
 
         if (filter.candidateId) {
             query.candidateId = filter.candidateId;

@@ -1,5 +1,8 @@
 import { Types } from "mongoose";
 
+export const RECRUITER_ROLES = ["admin", "recruiter"] as const;
+export type RecruiterRole = (typeof RECRUITER_ROLES)[number];
+
 export interface Recruiter{
     id:string;
     organizationId:Types.ObjectId;
@@ -7,7 +10,7 @@ export interface Recruiter{
     firstName:string;
     lastName:string;
     password:string;
-    role:"admin" | "recruiter";
+    role:RecruiterRole;
     isActive:boolean;
     createdAt:Date;
     updatedAt:Date;

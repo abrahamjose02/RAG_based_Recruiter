@@ -1,5 +1,3 @@
-//candidate domain type
-
 export interface CandidateLocation{
     city?:string | undefined;
     state?:string | undefined;

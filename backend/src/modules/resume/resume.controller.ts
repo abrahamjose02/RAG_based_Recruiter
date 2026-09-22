@@ -1,7 +1,6 @@
 import type { Request, Response } from "express";
 import { resumeService } from "./resume.service";
 import type { ListResumesQuery, ResumeIdParams, UploadResumeInput } from "./resume.schema";
-import type { ResumeQueryFilter } from "./resume.repository";
 
 export async function createResume(
     req: Request<Record<string, never>, unknown, UploadResumeInput>,
@@ -22,7 +21,6 @@ export async function getResumes(req: Request, res: Response): Promise<void> {
     const { page, limit, candidateId,recruiterId,mine } = req.query as unknown as ListResumesQuery;
     const result = await resumeService.getResumes(
         {
-            organizationId:req.recruiter!.organizationId,
             ...(candidateId ?  {candidateId} : {}),
             ...(mine ? {recruiterId:req.recruiter!.recruiterId} : {}),
             ...(!mine && recruiterId ? {recruiterId} : {} )
@@ -37,7 +35,7 @@ export async function getResumes(req: Request, res: Response): Promise<void> {
 }
 
 export async function getResumeById(req: Request<ResumeIdParams>, res: Response): Promise<void> {
-    const resume = await resumeService.getResumeById(req.params.id,req.recruiter!.organizationId);
+    const resume = await resumeService.getResumeById(req.params.id);
 
     res.status(200).json({
         success: true,

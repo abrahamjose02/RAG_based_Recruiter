@@ -1,0 +1,23 @@
+# Dependencies
+node_modules/
+
+# Build / compiled output
+dist/
+build/
+out/
+*.tsbuildinfo
+
+# Python bytecode
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Environment and secrets
+.env
+.env.local
+.env.*.local
+
+# Logs, coverage, OS
+*.log
+coverage/
+.DS_Store

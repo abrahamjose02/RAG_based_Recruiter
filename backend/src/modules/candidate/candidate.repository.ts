@@ -3,8 +3,6 @@ import type { CreateCandidateInput,UpdateCandidateInput } from "./candidate.sche
 import { isValidObjectId, type QueryFilter } from "mongoose";
 import type { Candidate, CandidateSource, NoticePeriodOption } from "./candidate.types";
 
-// Repositories owns the Database persistence logic.
-
 export type CandidateQueryFilter = {
     skills?:string[];
     city?:string;
@@ -51,7 +49,9 @@ class CandidateRepository{
    }
 
    async findByEmail(email:string):Promise<CandidateDocument | null>{
-    return CandidateModel.findOne({email:email.toLowerCase()})
+    return CandidateModel.findOne({
+        email:email.toLowerCase(),
+    })
    }
 
    async findMany(filter:CandidateQueryFilter,
@@ -122,19 +122,26 @@ class CandidateRepository{
 
    }
 
-   async updateById(id:string,data:UpdateCandidateInput):Promise<CandidateDocument | null>{
+   async updateById(
+    id:string,
+    data:UpdateCandidateInput,
+   ):Promise<CandidateDocument | null>{
     if(!isValidObjectId(id)){
         return null
     }
-    return CandidateModel.findByIdAndUpdate(id,
+    return CandidateModel.findByIdAndUpdate(
+        id,
         {$set:stripUndefined(data)},
         {new:true,runValidators:true}
     )
    }
 
-   async addSourceResumeId(id:string,resumeId:string):Promise<CandidateDocument | null>{
-
-    return CandidateModel.findByIdAndUpdate(id,
+   async addSourceResumeId(
+    id:string,
+    resumeId:string,
+   ):Promise<CandidateDocument | null>{
+    return CandidateModel.findByIdAndUpdate(
+        id,
         {$addToSet:{sourceResumeIds:resumeId}},
         {new:true}
     )

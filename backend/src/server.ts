@@ -2,6 +2,7 @@ import type { Server } from "node:http";
 import { app } from "./app";
 import { env } from "./config/env";
 import { connectDB,disconnectDB } from "./config/database";
+import { ensureCollection } from "./ai/infrastructure/qdrant";
 import { logger } from "./utils/logger";
 
 let server: Server | undefined
@@ -12,6 +13,7 @@ let server: Server | undefined
 async function bootstrap():Promise<void> {
     try {
         await connectDB()
+        await ensureCollection()
         server = app.listen(env.PORT,()=>{
             logger.info(`API running on ${env.PORT}`)
 

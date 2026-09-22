@@ -1,4 +1,4 @@
-import z, { object } from "zod";
+import z from "zod";
 import { RESUME_ALLOWED_MIME_TYPES } from "./resume.types";
 
 const objectIdString = z
@@ -79,8 +79,8 @@ const parsedEducationSchema = z.object({
   });
 
   export const parsedResumeResultSchema = z.object({
-    name: z.string().trim().min(1),
-    email: z.string().trim().email(),
+    name: z.string().trim().min(1).optional(),
+    email: z.string().trim().email().optional(),
     phone: z.string().trim().optional(),
     location: parsedLocationSchema.optional(),
     skills: z.array(z.string().trim().min(1)).default([]),
@@ -89,11 +89,6 @@ const parsedEducationSchema = z.object({
     professionalSummary: z.string().trim().optional(),
     experience: z.array(parsedExperienceSchema).default([]),
     education: z.array(parsedEducationSchema).default([]),
-  });
-
-  export const resumeAiResponseSchema = z.object({
-    success:z.literal(true),
-    data:parsedResumeResultSchema,
   });
 
 export type UploadResumeInput = z.infer<typeof uploadResumeSchema>["body"]

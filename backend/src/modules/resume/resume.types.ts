@@ -47,8 +47,8 @@ export interface ParsedEducation{
 }
 
 export interface ParsedResumeResult{
-    name:string ;
-    email:string;
+    name?:string | undefined;
+    email?:string | undefined;
     phone?:string | undefined;
     location?:CandidateLocation | undefined;
     skills:string[];

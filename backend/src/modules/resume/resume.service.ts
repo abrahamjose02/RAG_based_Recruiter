@@ -2,8 +2,6 @@ import { AppError } from "../../errors/app-error";
 import { candidateRepository } from "../candidate/candidate.repository";
 import { scheduleResumeIngest } from "./resume.ingest";
 import { resumeRepository, type ResumeQueryFilter, type FindManyResumesOptions, CreateResumeRecordInput } from "./resume.repository";
-import type { UploadResumeInput } from "./resume.schema";
-
 
 function assertStorageKeyBelongsToOrganization(documents:CreateResumeRecordInput["documents"],organizationId:string):void{
     const prefix = `organizations/${organizationId}/resumes/`;
@@ -31,14 +29,16 @@ class ResumeService {
         for(const resume of resumes){
             scheduleResumeIngest(resume)
         }
+
+        return resumes
     }
 
     async getResumes(filter: ResumeQueryFilter, options: FindManyResumesOptions = {}) {
         return resumeRepository.findMany(filter, options);
     }
 
-    async getResumeById(id: string,organizationId:string) {
-        const resume = await resumeRepository.findById(id,organizationId);
+    async getResumeById(id: string) {
+        const resume = await resumeRepository.findById(id);
 
         if (!resume) {
             throw new AppError("Resume not found", 404);

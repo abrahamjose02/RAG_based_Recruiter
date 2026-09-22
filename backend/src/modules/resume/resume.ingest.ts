@@ -1,7 +1,8 @@
-import { indexResume, parseResumeText } from "../../services/python-ai.client";
+import { indexResume } from "../../ai/services/indexing";
+import { parseResumeText } from "../../ai/services/resumeParser";
 import { candidateRepository } from "../candidate/candidate.repository";
 import { candidateService } from "../candidate/candidate.service";
-import { mapParsedResumeToCandidateInput } from "./resume.mapper";
+import { hasCandidateIdentity, mapParsedResumeToCandidateInput } from "./resume.mapper";
 import { ResumeDocument } from "./resume.model";
 import { resumeRepository } from "./resume.repository";
 
@@ -18,12 +19,11 @@ export async function ingestResume(resume: ResumeDocument): Promise<void> {
             errorMessage: null,
         });
 
-        let candidateId: string;
+        let candidateId = resume.candidateId?.toString();
 
-        if (resume.candidateId) {
-            candidateId = resume.candidateId.toString();
+        if (candidateId) {
             await candidateRepository.addSourceResumeId(candidateId, resumeId);
-        } else {
+        } else if (hasCandidateIdentity(parsed)) {
             const candidateInput = mapParsedResumeToCandidateInput(parsed);
             const candidate = await candidateService.upsertFromParsedResume({
                 input: candidateInput,
@@ -36,6 +36,8 @@ export async function ingestResume(resume: ResumeDocument): Promise<void> {
 
             candidateId = candidate._id.toString();
             await resumeRepository.attachCandidate(resumeId, candidateId);
+        } else {
+            return;
         }
 
         await resumeRepository.updateStatus(resumeId, "indexing");
@@ -43,13 +45,9 @@ export async function ingestResume(resume: ResumeDocument): Promise<void> {
         const { indexedChunks } = await indexResume({
             candidateId,
             resumeId,
-            extractedText: resume.extractedText,
             parsed,
-            ...(resume.organizationId
-                ? { sourceOrganizationId: resume.organizationId.toString() }
-                : {}),
             ...(resume.recruiterId
-                ? { sourceRecruiterId: resume.recruiterId.toString() }
+                ? { recruiterId: resume.recruiterId.toString() }
                 : {}),
         });
 

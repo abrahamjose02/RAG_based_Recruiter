@@ -1,6 +1,7 @@
 import { AppError } from "../../errors/app-error";
+import { removeCandidateVectors } from "../../ai/services/indexing";
 import type { CreateCandidateInput,UpdateCandidateInput } from "./candidate.schema";
-import { candidateRepository, PersistCandidateInput, type CandidateQueryFilter, type FindManyOptions } from "./candidate.repository";
+import { candidateRepository, type CandidateQueryFilter, type FindManyOptions } from "./candidate.repository";
 
 class CandidateService{
     async createCandidate(input:CreateCandidateInput){
@@ -16,7 +17,10 @@ class CandidateService{
         })
     }
 
-    async upsertFromParsedResume(params:{input:CreateCandidateInput;resumeId:string;}){
+    async upsertFromParsedResume(params:{
+        input:CreateCandidateInput;
+        resumeId:string;
+    }){
         const email = params.input.email.trim().toLowerCase();
         const existing = await candidateRepository.findByEmail(email);
         if(!existing){
@@ -39,7 +43,10 @@ class CandidateService{
             experience:params.input.experience,
             education:params.input.education
         })
-        return candidateRepository.addSourceResumeId(existing._id.toString(),params.resumeId)
+        return candidateRepository.addSourceResumeId(
+            existing._id.toString(),
+            params.resumeId,
+        )
     }
 
     async getCandidates(filter:CandidateQueryFilter={},options:FindManyOptions={}){
@@ -85,6 +92,7 @@ class CandidateService{
     if (!candidate) {
         throw new AppError("Candidate not found", 404);
       }
+      await removeCandidateVectors(id)
       return candidate;
     }
 

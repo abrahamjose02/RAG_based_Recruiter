@@ -1,5 +1,5 @@
 import { Schema,model, type HydratedDocument } from "mongoose";
-import type { Recruiter } from "./recruiter.types";
+import { RECRUITER_ROLES, type Recruiter } from "./recruiter.types";
 
 const recruiterSchema = new Schema<Recruiter>(
     {
@@ -31,7 +31,7 @@ const recruiterSchema = new Schema<Recruiter>(
         },
         role:{
             type:String,
-            enum:["admin","recruiter"],
+            enum:[...RECRUITER_ROLES],
             default:"recruiter"
         },
         isActive:{

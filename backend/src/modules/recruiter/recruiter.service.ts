@@ -20,7 +20,7 @@ class RecruiterService{
             recruiterId:recruiter._id.toString(),
             organizationId:recruiter.organizationId.toString(),
             email:recruiter.email,
-            role:recruiter.role
+            role:recruiter.role,
         })
 
         return {
@@ -31,7 +31,7 @@ class RecruiterService{
                 organization:recruiter.organizationId,
                 firstName:recruiter.firstName,
                 lastName:recruiter.lastName,
-                role:recruiter.role
+                role:recruiter.role,
             },
         };
     }
@@ -64,7 +64,7 @@ class RecruiterService{
                 firstName:recruiter.firstName,
                 lastName:recruiter.lastName,
                 organizationId:recruiter.organizationId,
-                role:recruiter.role
+                role:recruiter.role,
             }
         };
     }
