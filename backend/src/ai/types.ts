@@ -20,7 +20,7 @@ export type ResumeChunkPayload = {
     uploaded_by_recruiter_id?:string;
 }
 
-export type VectorPayload = {
+export type VectorPoint = {
     id:string;
     vector:number[]
     payload:ResumeChunkPayload

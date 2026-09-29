@@ -10,7 +10,7 @@ export async function completeJson(params:{
     const completion = await openai.chat.completions.create({
         model:params.model ?? env.RESUME_PARSER_MODEL,
         response_format:{type:"json_object"},
-        temperature:0,
+        temperature:4,
         messages:[
             {role:"system",content:params.systemPromt},
             {role:"user",content:params.userPrompt}
