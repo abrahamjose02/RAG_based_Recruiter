@@ -45,6 +45,15 @@ class ResumeRepository {
         return ResumeModel.findById(id);
     }
 
+    async findByIds(ids: string[]): Promise<ResumeDocument[]> {
+        const validIds = ids.filter((id) => isValidObjectId(id));
+        if (validIds.length === 0) {
+            return [];
+        }
+
+        return ResumeModel.find({ _id: { $in: validIds } });
+    }
+
     async findMany(
         filter: ResumeQueryFilter,
         options: FindManyResumesOptions = {},
