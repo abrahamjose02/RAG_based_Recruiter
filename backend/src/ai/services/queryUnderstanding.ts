@@ -5,8 +5,8 @@ import { completeJson } from "../providers/llm"
 const QueryUnderstandingSchema = z.object({
     semanticQuery:z.string().trim().min(1),
     city:z.string().trim().min(1).optional(),
-    minExperience:z.number().int().positive().optional(),
-    Skills :z.array(z.string().trim().min(1)).optional(),
+    minExperienceYears:z.number().int().positive().optional(),
+    skills:z.array(z.string().trim().min(1)).default([]),
     preferredSkills :z.array(z.string().trim().min(1)).default([]),
     companies :z.array(z.string().trim().min(1)).default([]),
     currentRole :z.string().trim().min(1).optional(),
@@ -46,7 +46,7 @@ export async function understandQuery(query:string):Promise<UnderstandingQuery> 
     if(!parsed.success){
         return {
             semanticQuery:query,
-            Skills:[],
+            skills:[],
             preferredSkills:[],
             companies:[],
             currentRole:undefined,
