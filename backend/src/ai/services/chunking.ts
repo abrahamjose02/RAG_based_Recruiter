@@ -12,13 +12,17 @@ export function chunkParsedResume(parsed: ParsedResumeResultInput): ResumeChunk[
         .join(", ");
     const summary = [
         clean(parsed.name),
+        clean(parsed.email),
+        clean(parsed.phone),
         clean(parsed.currentRole),
         parsed.totalExperienceYears != null ? `${parsed.totalExperienceYears} years` : "",
         location,
         clean(parsed.professionalSummary),
     ].filter(Boolean).join("\n");
 
-    if (summary) chunks.push({ chunkType: "PROFILE_SUMMARY", text: summary });
+    if (summary) {
+        chunks.push({ chunkType: "PROFILE_SUMMARY", text: summary });
+    }
     if (parsed.skills.length > 0) {
         chunks.push({ chunkType: "SKILLS", text: parsed.skills.join(", ") });
     }

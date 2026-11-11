@@ -57,7 +57,7 @@ export async function parseResumeText(text:string):Promise<ParsedResumeResultInp
         model:env.RESUME_PARSER_MODEL,
     })
 
-    const parsed = parsedResumeResultSchema.safeParse(raw)
+    const parsed = parsedResumeResultSchema.safeParse(prepareModelJson(raw))
     if(!parsed.success){
         throw new AppError("Resume parser returned a profile that failed validation ",502)
     }
