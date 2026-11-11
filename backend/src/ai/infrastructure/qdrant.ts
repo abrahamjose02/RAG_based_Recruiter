@@ -18,6 +18,7 @@ const PAYLOAD_INDEXES:Array<{
     {field_name:"city",field_schema:"keyword"},
     {field_name:"total_experience_years",field_schema:"float"},
     {field_name:"skills",field_schema:"keyword"},
+    {field_name:"companies",field_schema:"keyword"},
     {field_name:"current_role",field_schema:"keyword"}
 ]
 

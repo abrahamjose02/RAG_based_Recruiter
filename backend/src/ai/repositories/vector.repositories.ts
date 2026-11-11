@@ -13,7 +13,6 @@ function asPayload(value:unknown):ResumeChunkPayload | undefined {
     const payload = value as ResumeChunkPayload
     if(
         payload.source !== "resume" ||
-    typeof payload.candidate_profile_id !== "string" ||
     typeof payload.resume_id !== "string" || 
     typeof payload.chunk_type !== "string" ||
     typeof payload.text !== "string")
@@ -86,6 +85,15 @@ class VectorRepository{
             must.push({
                 key:"total_experience_years",
                 range:{ gte: params.filter.minExperienceYears},
+            })
+        }
+
+        if(params.filter?.companies &&  params.filter.companies.length > 0){
+            must.push({
+                key:"companies",
+                match:{
+                    any: params.filter.companies.map((company) => company.trim().toLowerCase())
+                }
             })
         }
 

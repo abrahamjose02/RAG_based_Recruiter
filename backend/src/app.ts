@@ -10,6 +10,7 @@ import { candidateRouter } from "./modules/candidate/candidate.routes"
 import { resumeRouter } from "./modules/resume/resume.routes"
 import { organizationRouter } from "./modules/organization/organization.routes"
 import { recruiterRouter } from "./modules/recruiter/recruiter.router"
+import searchRouter from "./modules/search/search.routes"
 
 export const app = express()
 
@@ -28,6 +29,7 @@ app.use("/api/v1/candidates",candidateRouter)
 app.use("/api/v1/resumes",resumeRouter)
 app.use("/api/v1/organization",organizationRouter)
 app.use("/api/v1/recruiters",recruiterRouter)
+app.use("/api/v1/search",searchRouter)
 
 app.use(notFoundMiddleware)
 

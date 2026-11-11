@@ -30,6 +30,7 @@ export type VectorSearchFilter = {
     city?:string
     minExperienceYears?:number;
     skills?:string[]
+    companies?:string[]
     source?:ChunkSource
 }
 
